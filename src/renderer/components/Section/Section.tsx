@@ -255,7 +255,7 @@ function SectionComponent({ dayId, section }: SectionProps) {
         </div>
       )}
 
-      {!section.isCollapsed && (
+      {(!section.isCollapsed || !hasItems) && (
         <div className="section-content">
           {/* Items section */}
           <div className="section-items">
