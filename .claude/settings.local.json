@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create @anthropic-ai/electron-vite@latest . -- --template react-ts)",
+      "Bash(npm create:*)",
+      "WebFetch(domain:coolors.co)",
+      "Bash(npx tsc:*)",
+      "Bash(tree:*)"
+    ]
+  }
+}

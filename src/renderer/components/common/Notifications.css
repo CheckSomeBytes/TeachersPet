@@ -1,0 +1,66 @@
+.notifications {
+  position: fixed;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  z-index: 1000;
+}
+
+.notification {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  box-shadow: var(--pixel-shadow);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  animation: slideIn 0.3s ease;
+  max-width: 300px;
+}
+
+.notification--success {
+  border-color: var(--color-success);
+}
+
+.notification--error {
+  border-color: var(--color-danger);
+}
+
+.notification--info {
+  border-color: var(--color-primary);
+}
+
+.notification-icon {
+  font-size: 12px;
+}
+
+.notification--success .notification-icon {
+  color: var(--color-success);
+}
+
+.notification--error .notification-icon {
+  color: var(--color-danger);
+}
+
+.notification--info .notification-icon {
+  color: var(--color-primary);
+}
+
+.notification-message {
+  flex: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

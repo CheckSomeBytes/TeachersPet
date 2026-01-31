@@ -1,0 +1,103 @@
+.add-item-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.add-item-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  background-color: var(--color-background);
+  border: 4px solid var(--color-accent);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.3);
+  min-width: 500px;
+  max-width: 700px;
+}
+
+.add-item-type-selector {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.add-item-type-btn {
+  flex: 1;
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.add-item-type-btn:hover {
+  color: var(--color-text);
+}
+
+.add-item-type-btn--active {
+  background-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.add-item-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.add-item-fields .input,
+.add-item-fields .textarea {
+  font-size: var(--font-size-xs);
+}
+
+.add-item-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* Multi-link entries */
+.multi-link-entries {
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.multi-link-entry {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+}
+
+.multi-link-entry:not(:last-child) {
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.multi-link-entry-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+  min-width: 0;
+}
+
+.multi-link-entry-fields .input {
+  width: 100%;
+  font-size: var(--font-size-xs);
+}
+
+.multi-link-remove-btn {
+  flex-shrink: 0;
+}
