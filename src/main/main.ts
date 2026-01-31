@@ -606,12 +606,15 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
     }
     .message-container {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
       margin-bottom: 20px;
       max-width: 100%;
     }
-    .message { font-size: 10px; color: ${theme.textMuted}; word-wrap: break-word; line-height: 1.6; }
+    .message { font-size: 12px; color: ${theme.textMuted}; word-wrap: break-word; line-height: 1.8; text-align: center; }
+    .message-line { display: block; }
+    .message-separator { color: ${theme.textMuted}; font-size: 10px; }
     .message-edit-btn {
       background: ${theme.background};
       border: 2px solid ${theme.textMuted};
@@ -624,7 +627,7 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
       transition: opacity 0.2s;
       flex-shrink: 0;
     }
-    .message-container:hover .message-edit-btn {
+    body:hover .message-edit-btn {
       opacity: 1;
     }
     .message-edit-btn:hover {
@@ -663,7 +666,7 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
     <button class="time-btn" onclick="adjustTime(-60)" title="Remove 1 minute">−</button>
   </div>
   <div class="message-container" id="messageContainer">
-    <div class="message" id="message">${escapedMessage}</div>
+    <div class="message" id="message">${escapedMessage.replace(/ \+ /g, '</span><span class="message-separator">+</span><span class="message-line">').replace(/^/, '<span class="message-line">').replace(/$/, '</span>')}</div>
     <button class="message-edit-btn" onclick="editMessage()" title="Edit message">✎</button>
   </div>
   <div class="timer" id="timer">00:00</div>
@@ -710,10 +713,19 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
       }
     }
     function updateDisplay() {
-      var minutes = Math.floor(remaining / 60);
+      var hours = Math.floor(remaining / 3600);
+      var minutes = Math.floor((remaining % 3600) / 60);
       var seconds = remaining % 60;
       var timerEl = document.getElementById('timer');
-      timerEl.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+
+      if (remaining > 3599) {
+        // More than 59:59 - show HH:MM:SS
+        timerEl.textContent = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+      } else {
+        // 59:59 or less - show MM:SS
+        timerEl.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+      }
+
       timerEl.className = 'timer';
       if (remaining <= 0) {
         timerEl.classList.add('done');

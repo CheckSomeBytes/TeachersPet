@@ -77,6 +77,8 @@ export interface Section {
   isCollapsed: boolean;
   items: SectionItem[];
   polls: Poll[];
+  assignedLab?: string; // Lab number assigned to this section (e.g., "4.1")
+  labNotes?: string; // Notes for the assigned lab
 }
 
 export type SectionItem = Link | Note;

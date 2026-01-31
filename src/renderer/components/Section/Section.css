@@ -116,6 +116,132 @@
   background-color: var(--color-surface);
 }
 
+.section--lab-drag-over {
+  border-color: var(--color-success);
+  background-color: rgba(46, 213, 115, 0.1);
+}
+
+/* Lab Badge on Section */
+.section-lab-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 50px;
+}
+
+.section-lab-badge {
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  background-color: var(--color-accent);
+  color: var(--color-background);
+  border: 2px solid var(--color-accent);
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.section-lab-badge:hover {
+  background-color: var(--color-background);
+  color: var(--color-accent);
+}
+
+.section-lab-badge[draggable="true"] {
+  cursor: grab;
+}
+
+.section-lab-badge[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.section-lab-badge--has-notes {
+  position: relative;
+}
+
+.section-lab-badge--has-notes::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-success);
+  border-radius: 0;
+}
+
+.section-lab-remove {
+  font-family: var(--font-family);
+  font-size: 10px;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+/* Lab Notes Popup */
+.section-lab-notes-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.section-lab-notes-popup {
+  background-color: var(--color-background);
+  border: 4px solid var(--color-accent);
+  padding: var(--spacing-md);
+  min-width: 540px;
+  max-width: 720px;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.section-lab-notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px dashed var(--color-border);
+}
+
+.section-lab-notes-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.section-lab-notes-title {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  text-transform: uppercase;
+}
+
+.section-lab-notes-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.section-lab-notes-textarea {
+  width: 100%;
+  flex: 1;
+  resize: none;
+}
+
+.section-lab-remove:hover {
+  color: var(--color-danger);
+}
+
 .section-action-btn--active {
   color: var(--color-accent);
 }

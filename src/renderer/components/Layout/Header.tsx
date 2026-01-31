@@ -323,6 +323,29 @@ function Header() {
     }
   };
 
+  const handleQuickLabPoll = async (labNum: string) => {
+    const { windowTarget, labPollTemplate } = currentProfile.settings;
+
+    if (!windowTarget.pattern) {
+      addNotification('No window pattern configured. Go to Settings.', 'error');
+      return;
+    }
+
+    const pollText = (labPollTemplate || '').replace(/<LAB_NUMBER>/g, labNum);
+
+    const result = await window.electronAPI.focusAndPaste(
+      windowTarget.pattern,
+      windowTarget.matchMode,
+      pollText
+    );
+
+    if (result.success) {
+      addNotification(`Lab ${labNum} poll sent!`, 'success');
+    } else {
+      addNotification(result.error || 'Failed to send lab poll', 'error');
+    }
+  };
+
   return (
     <>
     <header className="header">
@@ -505,6 +528,36 @@ function Header() {
           🧪
         </button>
       </div>
+
+      {/* Lab Bar */}
+      {currentDay?.dayNumber && currentDay?.labCount && currentDay.labCount > 0 && (
+        <div className="lab-bar">
+          <span className="lab-bar-label">LABS</span>
+          <div className="lab-bar-buttons">
+            {Array.from({ length: currentDay.labCount }, (_, i) => {
+              const label = `${currentDay.dayNumber}.${i + 1}`;
+              // Check if this lab is assigned to any section
+              const assignedSection = currentDay.sections.find(s => s.assignedLab === label);
+              const isAssigned = !!assignedSection;
+              return (
+                <button
+                  key={label}
+                  className={`btn btn--small lab-bar-btn ${isAssigned ? 'lab-bar-btn--assigned' : ''}`}
+                  onClick={() => handleQuickLabPoll(label)}
+                  draggable={isEditMode}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('application/lab-assign', JSON.stringify({ labNumber: label }));
+                    e.dataTransfer.effectAllowed = 'copy';
+                  }}
+                  title={isEditMode ? `Drag to assign Lab ${label} to a section, or click to send poll` : `Send Lab ${label} poll`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Time Estimate Popup */}
       {showTimeEstimatePopup && (

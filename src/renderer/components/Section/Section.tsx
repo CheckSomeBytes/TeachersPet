@@ -14,40 +14,104 @@ interface SectionProps {
 }
 
 function SectionComponent({ dayId, section }: SectionProps) {
-  const { updateSection, deleteSection, toggleSectionCollapse, isEditMode, selectedSectionIds, toggleSectionSelection, moveItemToSection, resetSectionPolls } = useAppStore();
+  const { updateSection, deleteSection, toggleSectionCollapse, isEditMode, selectedSectionIds, toggleSectionSelection, moveItemToSection, resetSectionPolls, assignLabToSection, unassignLabFromSection, updateLabNotes, addNotification, getCurrentProfile } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(section.name);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isLabDragOver, setIsLabDragOver] = useState(false);
   const [showPolls, setShowPolls] = useState(false);
   const [isAddingPoll, setIsAddingPoll] = useState(false);
   const [isSectionDragging, setIsSectionDragging] = useState(false);
+  const [showLabNotes, setShowLabNotes] = useState(false);
+  const [labNotesText, setLabNotesText] = useState(section.labNotes || '');
+
+  const currentProfile = getCurrentProfile();
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    // Check if this is a lab assignment drag
+    if (e.dataTransfer.types.includes('application/lab-assign')) {
+      e.dataTransfer.dropEffect = 'copy';
+      return;
+    }
     e.dataTransfer.dropEffect = 'move';
   };
 
   const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragOver(true);
+    if (e.dataTransfer.types.includes('application/lab-assign')) {
+      setIsLabDragOver(true);
+    } else {
+      setIsDragOver(true);
+    }
   };
 
   const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsDragOver(false);
+      setIsLabDragOver(false);
     }
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragOver(false);
+    setIsLabDragOver(false);
+
+    // Handle lab assignment drop
+    if (e.dataTransfer.types.includes('application/lab-assign')) {
+      try {
+        const data = JSON.parse(e.dataTransfer.getData('application/lab-assign'));
+        // If dragged from another section, remove it from source first
+        if (data.sourceSectionId && data.sourceSectionId !== section.id) {
+          unassignLabFromSection(data.sourceDayId, data.sourceSectionId);
+        }
+        // Don't re-assign to same section
+        if (data.sourceSectionId !== section.id) {
+          assignLabToSection(dayId, section.id, data.labNumber);
+          addNotification(`Lab ${data.labNumber} assigned to ${section.name}`, 'success');
+        }
+      } catch {}
+      return;
+    }
+
     // If this is a section reorder drop, ignore here (handled by DayView)
     if (e.dataTransfer.types.includes('application/section-reorder')) return;
     try {
       const data = JSON.parse(e.dataTransfer.getData('application/json'));
       moveItemToSection(data.itemId, data.sourceDayId, data.sourceSectionId, dayId, section.id);
     } catch {}
+  };
+
+  const handleLabPoll = async () => {
+    if (!section.assignedLab) return;
+
+    const { windowTarget, labPollTemplate } = currentProfile.settings;
+
+    if (!windowTarget.pattern) {
+      addNotification('No window pattern configured. Go to Settings.', 'error');
+      return;
+    }
+
+    const pollText = (labPollTemplate || '').replace(/<LAB_NUMBER>/g, section.assignedLab);
+
+    const result = await window.electronAPI.focusAndPaste(
+      windowTarget.pattern,
+      windowTarget.matchMode,
+      pollText
+    );
+
+    if (result.success) {
+      addNotification(`Lab ${section.assignedLab} poll sent!`, 'success');
+    } else {
+      addNotification(result.error || 'Failed to send lab poll', 'error');
+    }
+  };
+
+  const handleOpenLabNotes = () => {
+    setLabNotesText(section.labNotes || '');
+    setShowLabNotes(true);
   };
 
   const handleSectionDragStart = (e: DragEvent<HTMLSpanElement>) => {
@@ -80,7 +144,7 @@ function SectionComponent({ dayId, section }: SectionProps) {
 
   return (
     <div
-      className={`section panel ${isSectionSelected ? 'section--selected' : ''} ${isDragOver && isEditMode ? 'section--drag-over' : ''} ${isSectionDragging ? 'section--dragging' : ''}`}
+      className={`section panel ${isSectionSelected ? 'section--selected' : ''} ${isDragOver && isEditMode ? 'section--drag-over' : ''} ${isLabDragOver && isEditMode ? 'section--lab-drag-over' : ''} ${isSectionDragging ? 'section--dragging' : ''}`}
       data-section-id={section.id}
       data-section-order={section.order}
       onDragOver={isEditMode ? handleDragOver : undefined}
@@ -147,7 +211,37 @@ function SectionComponent({ dayId, section }: SectionProps) {
         ) : (
           <>
             <h3 className="section-title">{section.name}</h3>
-            {/* Read mode: always visible polls button */}
+            {/* Assigned Lab Badge - always in same position, to the left of polls */}
+            <div className="section-lab-wrapper">
+              {isEditMode && section.assignedLab && (
+                <button
+                  className="section-lab-remove"
+                  onClick={() => unassignLabFromSection(dayId, section.id)}
+                  title="Remove lab assignment"
+                >
+                  ✕
+                </button>
+              )}
+              {section.assignedLab && (
+                <button
+                  className={`section-lab-badge ${section.labNotes ? 'section-lab-badge--has-notes' : ''}`}
+                  onClick={handleOpenLabNotes}
+                  draggable={isEditMode}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('application/lab-assign', JSON.stringify({
+                      labNumber: section.assignedLab,
+                      sourceDayId: dayId,
+                      sourceSectionId: section.id,
+                    }));
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                  title={isEditMode ? `Lab ${section.assignedLab} - Click to open notes, drag to move` : `Click to open Lab ${section.assignedLab} notes`}
+                >
+                  {section.assignedLab}
+                </button>
+              )}
+            </div>
+            {/* Read mode: polls button if has polls */}
             {!isEditMode && hasPollsToShow && (
               <div className="section-poll-btn-wrapper">
                 <button
@@ -251,6 +345,44 @@ function SectionComponent({ dayId, section }: SectionProps) {
                 </div>
               )
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Lab Notes popup */}
+      {showLabNotes && section.assignedLab && (
+        <div className="section-lab-notes-overlay" onClick={() => setShowLabNotes(false)}>
+          <div className="section-lab-notes-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="section-lab-notes-header">
+              <span className="section-lab-notes-title">Lab {section.assignedLab} Notes</span>
+              <div className="section-lab-notes-header-actions">
+                <button
+                  className="btn btn--small btn--success"
+                  onClick={handleLabPoll}
+                  title="Send lab poll to target window"
+                >
+                  🧪 SEND POLL
+                </button>
+                <button
+                  className="btn btn--small btn--danger"
+                  onClick={() => setShowLabNotes(false)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="section-lab-notes-content">
+              <textarea
+                className="textarea section-lab-notes-textarea"
+                placeholder="Enter your lab notes here..."
+                value={labNotesText}
+                onChange={(e) => {
+                  setLabNotesText(e.target.value);
+                  updateLabNotes(dayId, section.id, e.target.value);
+                }}
+                autoFocus
+              />
+            </div>
           </div>
         </div>
       )}

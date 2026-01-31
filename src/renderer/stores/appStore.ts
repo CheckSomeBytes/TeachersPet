@@ -55,6 +55,9 @@ interface AppState {
   toggleSectionCollapse: (dayId: string, sectionId: string) => void;
   collapseAllSections: (dayId: string) => void;
   expandAllSections: (dayId: string) => void;
+  assignLabToSection: (dayId: string, sectionId: string, labNumber: string) => void;
+  unassignLabFromSection: (dayId: string, sectionId: string) => void;
+  updateLabNotes: (dayId: string, sectionId: string, notes: string) => void;
 
   // Day navigation
   goToPreviousDay: () => void;
@@ -487,6 +490,90 @@ export const useAppStore = create<AppState>((set, get) => ({
                           ...section,
                           isCollapsed: false,
                         })),
+                      }
+                    : day
+                ),
+              }
+            : p
+        ),
+      },
+    }));
+    get().saveConfig();
+  },
+
+  assignLabToSection: (dayId, sectionId, labNumber) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        profiles: state.config.profiles.map((p) =>
+          p.id === state.config.currentProfileId
+            ? {
+                ...p,
+                days: p.days.map((day) =>
+                  day.id === dayId
+                    ? {
+                        ...day,
+                        sections: day.sections.map((section) =>
+                          section.id === sectionId
+                            ? { ...section, assignedLab: labNumber }
+                            : section
+                        ),
+                      }
+                    : day
+                ),
+              }
+            : p
+        ),
+      },
+    }));
+    get().saveConfig();
+  },
+
+  unassignLabFromSection: (dayId, sectionId) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        profiles: state.config.profiles.map((p) =>
+          p.id === state.config.currentProfileId
+            ? {
+                ...p,
+                days: p.days.map((day) =>
+                  day.id === dayId
+                    ? {
+                        ...day,
+                        sections: day.sections.map((section) =>
+                          section.id === sectionId
+                            ? { ...section, assignedLab: undefined }
+                            : section
+                        ),
+                      }
+                    : day
+                ),
+              }
+            : p
+        ),
+      },
+    }));
+    get().saveConfig();
+  },
+
+  updateLabNotes: (dayId, sectionId, notes) => {
+    set((state) => ({
+      config: {
+        ...state.config,
+        profiles: state.config.profiles.map((p) =>
+          p.id === state.config.currentProfileId
+            ? {
+                ...p,
+                days: p.days.map((day) =>
+                  day.id === dayId
+                    ? {
+                        ...day,
+                        sections: day.sections.map((section) =>
+                          section.id === sectionId
+                            ? { ...section, labNotes: notes }
+                            : section
+                        ),
                       }
                     : day
                 ),
