@@ -36,6 +36,7 @@ interface AppState {
   selectedSectionIds: Set<string>;
   isBreakAlertActive: boolean;
   showValidationModal: boolean;
+  _configLoadStarted: boolean;
 
   // Actions
   loadConfig: () => Promise<void>;
@@ -132,10 +133,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedSectionIds: new Set<string>(),
   isBreakAlertActive: false,
   showValidationModal: false,
+  _configLoadStarted: false,
   settingsTab: 'profiles',
 
   loadConfig: async () => {
-    set({ isLoading: true });
+    if (get()._configLoadStarted) return; // Prevent duplicate calls (e.g., React StrictMode)
+    set({ _configLoadStarted: true, isLoading: true });
     try {
       const loadedConfig = await window.electronAPI.loadConfig();
 
