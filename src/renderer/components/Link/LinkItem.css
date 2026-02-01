@@ -123,11 +123,18 @@
   width: 28px;
   height: 28px;
   image-rendering: pixelated;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
 }
 
 .link-action-icon--small {
   width: 22px;
   height: 22px;
+}
+
+/* Modern font: softer shadow */
+:root[data-font-style="modern"] .link-action-icon {
+  image-rendering: auto;
+  filter: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.4));
 }
 
 .link-action-btn--delete {
@@ -269,4 +276,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Modern font adjustments */
+:root[data-font-style="modern"] .link-title {
+  font-size: var(--font-size-sm);
 }

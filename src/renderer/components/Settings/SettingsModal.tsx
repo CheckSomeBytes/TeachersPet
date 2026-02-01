@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../stores/appStore';
-import { DEFAULT_THEME, Theme, ThemeColors, PRESET_THEMES, TIMEZONES, ScheduledTime } from '../../../shared/types';
+import { DEFAULT_THEME, Theme, ThemeColors, PRESET_THEMES, TIMEZONES, ScheduledTime, FontSize } from '../../../shared/types';
 import './SettingsModal.css';
 
 type SettingsTab = 'profiles' | 'days' | 'window' | 'links' | 'theme' | 'schedule' | 'data';
@@ -804,9 +804,27 @@ function SettingsModal() {
                   }
                 >
                   <option value='"Press Start 2P", monospace'>Press Start 2P (8-bit)</option>
+                  <option value='"Lexend", sans-serif'>Lexend (Modern)</option>
                   <option value='"Courier New", monospace'>Courier New</option>
                   <option value='monospace'>System Monospace</option>
                   <option value='sans-serif'>System Sans-Serif</option>
+                </select>
+              </div>
+
+              <div className="settings-field">
+                <label className="settings-label">FONT SIZE</label>
+                <select
+                  className="select"
+                  value={settings.fontSize || 'medium'}
+                  onChange={(e) =>
+                    updateSettings({
+                      fontSize: e.target.value as FontSize,
+                    })
+                  }
+                >
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
                 </select>
               </div>
 
@@ -889,6 +907,13 @@ function SettingsModal() {
                 </button>
               </div>
 
+              {(settings.scheduledTimes || []).length > 0 && (
+                <div className="settings-schedule-header">
+                  <span className="settings-schedule-header-info">Schedule</span>
+                  <span className="settings-schedule-header-break">Break?</span>
+                  <span className="settings-schedule-header-actions">Actions</span>
+                </div>
+              )}
               <div className="settings-day-list">
                 {(settings.scheduledTimes || [])
                   .sort((a, b) => a.time.localeCompare(b.time))
@@ -968,19 +993,19 @@ function SettingsModal() {
                         </div>
                       ) : (
                         <>
-                          <label className="settings-checkbox">
+                          <span className="settings-schedule-info">
+                            <span className="settings-schedule-time">{formatTimeDisplay(st.time)}</span>
+                            <span className="settings-schedule-label">{st.label}</span>
+                            <span className="settings-schedule-duration">({st.duration || 15} min)</span>
+                          </span>
+                          <label className="settings-checkbox settings-schedule-break-checkbox">
                             <input
                               type="checkbox"
-                              checked={st.enabled}
+                              checked={st.isBreak ?? false}
                               onChange={(e) =>
-                                updateScheduledTime(st.id, { enabled: e.target.checked })
+                                updateScheduledTime(st.id, { isBreak: e.target.checked })
                               }
                             />
-                            <span className="settings-schedule-info">
-                              <span className="settings-schedule-time">{formatTimeDisplay(st.time)}</span>
-                              <span className="settings-schedule-label">{st.label}</span>
-                              <span className="settings-schedule-duration">({st.duration || 15} min)</span>
-                            </span>
                           </label>
                           <div className="settings-day-actions">
                             <button

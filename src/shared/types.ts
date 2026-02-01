@@ -21,12 +21,16 @@ export interface ScheduledTime {
   time: string; // HH:MM format (24-hour)
   duration: number; // Duration in minutes
   enabled: boolean;
+  isBreak?: boolean; // Whether to show in time estimate popup as a break option
 }
+
+export type FontSize = 'small' | 'medium' | 'large';
 
 export interface Settings {
   windowTarget: WindowTarget;
   checkLinksOnStartup: boolean;
   theme: Theme;
+  fontSize: FontSize;
   labPollTemplate: string;
   timezone: string;
   scheduledTimes: ScheduledTime[];
@@ -34,6 +38,19 @@ export interface Settings {
   breakAlertMinutes: number; // Minutes before break to trigger alert theme (default 5)
   lastLaunchDate?: string; // ISO date string of last launch
 }
+
+// Font size presets (in pixels) - separate presets for retro (pixel) and modern fonts
+export const FONT_SIZE_PRESETS_RETRO: Record<FontSize, { xs: number; sm: number; base: number; lg: number }> = {
+  small: { xs: 7, sm: 9, base: 11, lg: 13 },
+  medium: { xs: 8, sm: 10, base: 12, lg: 14 },
+  large: { xs: 10, sm: 12, base: 14, lg: 16 },
+};
+
+export const FONT_SIZE_PRESETS_MODERN: Record<FontSize, { xs: number; sm: number; base: number; lg: number }> = {
+  small: { xs: 11, sm: 13, base: 15, lg: 17 },
+  medium: { xs: 12, sm: 14, base: 16, lg: 18 },
+  large: { xs: 14, sm: 16, base: 18, lg: 20 },
+};
 
 export interface WindowTarget {
   matchMode: 'exact' | 'contains' | 'regex';
@@ -236,6 +253,25 @@ export const THEME_EARTHY_GREEN: Theme = {
   },
 };
 
+// Modern minimalist theme with Lexend font
+export const THEME_MODERN_MINIMAL: Theme = {
+  name: 'Modern Minimal',
+  isCustom: false,
+  fontFamily: '"Lexend", sans-serif',
+  colors: {
+    primary: '#3B82F6',
+    secondary: '#8B5CF6',
+    background: '#0F172A',
+    surface: '#1E293B',
+    text: '#F8FAFC',
+    textMuted: '#94A3B8',
+    accent: '#22D3EE',
+    border: '#334155',
+    danger: '#EF4444',
+    success: '#22C55E',
+  },
+};
+
 // All preset themes
 export const PRESET_THEMES: Theme[] = [
   DEFAULT_THEME,
@@ -243,6 +279,7 @@ export const PRESET_THEMES: Theme[] = [
   THEME_SUNNY_BEACH_DAY,
   THEME_DARK_SUNSET,
   THEME_EARTHY_GREEN,
+  THEME_MODERN_MINIMAL,
 ];
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -253,6 +290,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   checkLinksOnStartup: false,
   theme: DEFAULT_THEME,
+  fontSize: 'medium',
   labPollTemplate: '/poll "How are we doing on Lab <LAB_NUMBER>? :lab_coat:" ":exclamation: Having Issues" ":timer_clock:Need More Time" ":white_check_mark: Finished the Lab!" no-preview anonymous',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   scheduledTimes: [],

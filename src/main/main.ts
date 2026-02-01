@@ -517,6 +517,7 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
       backgroundColor: theme.background,
       title: 'Countdown Timer',
       autoHideMenuBar: true,
+      roundedCorners: false,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,

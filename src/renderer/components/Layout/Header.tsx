@@ -1,7 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppStore } from '../../stores/appStore';
-import { TIMEZONES, ScheduledTime } from '../../../shared/types';
+import { TIMEZONES, ScheduledTime, Link, Note } from '../../../shared/types';
+import iconBrowser from '../../assets/icon-browser.png';
+import iconSlack from '../../assets/icon-slack.png';
 import './Header.css';
+
+// Search result interface
+interface SearchResult {
+  type: 'link' | 'note';
+  item: Link | Note;
+  dayId: string;
+  dayName: string;
+  sectionId: string;
+  sectionName: string;
+  matchField: 'title' | 'url' | 'content';
+}
 
 // Format minutes as "X hr Y min" or "X min" depending on duration
 function formatDuration(minutes: number): string {
@@ -41,15 +54,25 @@ function Header() {
 
   // Time estimate popup state
   const [showTimeEstimatePopup, setShowTimeEstimatePopup] = useState(false);
-  const [estimateIncludeLab, setEstimateIncludeLab] = useState(false);
   const [estimateLabNumber, setEstimateLabNumber] = useState('');
   const [isCustomEstimateLabNumber, setIsCustomEstimateLabNumber] = useState(false);
   const [estimateLabTime, setEstimateLabTime] = useState('30');
   const [estimateBreakId, setEstimateBreakId] = useState<string>('');
 
+  // Search popup state
+  const [showSearchPopup, setShowSearchPopup] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+
   const timezone = currentProfile.settings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   const scheduledTimes = currentProfile.settings.scheduledTimes || [];
   const breakAlertMinutes = currentProfile.settings.breakAlertMinutes || 5;
+
+  // Detect if using modern font
+  const fontFamily = currentProfile.settings.theme.fontFamily;
+  const isModernFont = fontFamily.includes('Lexend') ||
+                       fontFamily === 'sans-serif' ||
+                       fontFamily.includes('Courier');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -154,13 +177,16 @@ function Header() {
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < sortedDays.length - 1;
 
-  // Get enabled scheduled times for the break dropdown
+  // Get enabled scheduled times for the countdown display
   const enabledScheduledTimes = scheduledTimes.filter((st) => st.enabled);
+  // Get scheduled times marked as breaks for the time estimate popup
+  const breakScheduledTimes = scheduledTimes.filter((st) => st.isBreak);
 
   // Calculate return time based on lab time and optional break
   const calculateReturnTime = (): { time: string; message: string; timerMessage: string; totalMinutes: number } => {
-    const labMinutes = estimateIncludeLab ? (parseInt(estimateLabTime) || 30) : 0;
-    const selectedBreak = enabledScheduledTimes.find((st) => st.id === estimateBreakId);
+    const hasLab = estimateLabNumber.trim() !== '';
+    const labMinutes = hasLab ? (parseInt(estimateLabTime) || 30) : 0;
+    const selectedBreak = breakScheduledTimes.find((st) => st.id === estimateBreakId);
 
     // Get current time in timezone
     const now = new Date();
@@ -169,14 +195,13 @@ function Header() {
     let totalMinutes = labMinutes;
     const parts: string[] = [];
 
-    if (estimateIncludeLab) {
-      const labInfo = estimateLabNumber.trim() ? `Lab ${estimateLabNumber.trim()}` : 'Lab';
-      parts.push(`${labInfo} (${formatDuration(labMinutes)})`);
+    if (hasLab) {
+      parts.push(`:lab_coat: Lab ${estimateLabNumber.trim()} (${formatDuration(labMinutes)})`);
     }
 
     if (selectedBreak) {
       totalMinutes += selectedBreak.duration || 15;
-      parts.push(`${selectedBreak.label} (${formatDuration(selectedBreak.duration || 15)})`);
+      parts.push(`:timer_clock: ${selectedBreak.label} (${formatDuration(selectedBreak.duration || 15)})`);
     }
 
     const returnDate = new Date(nowInTz.getTime() + totalMinutes * 60 * 1000);
@@ -323,6 +348,164 @@ function Header() {
     }
   };
 
+  // Search functionality
+  const performSearch = useCallback((query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const results: SearchResult[] = [];
+    const lowerQuery = query.toLowerCase();
+
+    currentProfile.days.forEach((day) => {
+      day.sections.forEach((section) => {
+        section.items.forEach((item) => {
+          if (item.type === 'link') {
+            const link = item as Link;
+            // Check title (including customTitle)
+            const displayTitle = link.customTitle || link.title;
+            if (displayTitle.toLowerCase().includes(lowerQuery)) {
+              results.push({
+                type: 'link',
+                item: link,
+                dayId: day.id,
+                dayName: day.name,
+                sectionId: section.id,
+                sectionName: section.name,
+                matchField: 'title',
+              });
+            } else if (link.url.toLowerCase().includes(lowerQuery)) {
+              results.push({
+                type: 'link',
+                item: link,
+                dayId: day.id,
+                dayName: day.name,
+                sectionId: section.id,
+                sectionName: section.name,
+                matchField: 'url',
+              });
+            }
+            // Also check additional URLs
+            if (link.additionalUrls) {
+              link.additionalUrls.forEach((addUrl) => {
+                if (addUrl.title.toLowerCase().includes(lowerQuery) || addUrl.url.toLowerCase().includes(lowerQuery)) {
+                  // Avoid duplicates if main link already matched
+                  const alreadyAdded = results.some(r => r.item.id === link.id);
+                  if (!alreadyAdded) {
+                    results.push({
+                      type: 'link',
+                      item: link,
+                      dayId: day.id,
+                      dayName: day.name,
+                      sectionId: section.id,
+                      sectionName: section.name,
+                      matchField: 'url',
+                    });
+                  }
+                }
+              });
+            }
+          } else if (item.type === 'note') {
+            const note = item as Note;
+            if (note.title.toLowerCase().includes(lowerQuery)) {
+              results.push({
+                type: 'note',
+                item: note,
+                dayId: day.id,
+                dayName: day.name,
+                sectionId: section.id,
+                sectionName: section.name,
+                matchField: 'title',
+              });
+            } else if (note.content.toLowerCase().includes(lowerQuery)) {
+              results.push({
+                type: 'note',
+                item: note,
+                dayId: day.id,
+                dayName: day.name,
+                sectionId: section.id,
+                sectionName: section.name,
+                matchField: 'content',
+              });
+            }
+          }
+        });
+      });
+    });
+
+    setSearchResults(results);
+  }, [currentProfile.days]);
+
+  const handleSearchResultClick = (result: SearchResult) => {
+    // Navigate to the day containing the result
+    const { selectDay } = useAppStore.getState();
+    selectDay(result.dayId);
+    setShowSearchPopup(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  // Search result action handlers
+  const handleSearchOpenInChrome = async (e: React.MouseEvent, url: string) => {
+    e.stopPropagation();
+    try {
+      await window.electronAPI.openInChrome(url);
+    } catch {
+      addNotification('Failed to open link in Chrome', 'error');
+    }
+  };
+
+  const handleSearchFocusAndPaste = async (e: React.MouseEvent, result: SearchResult) => {
+    e.stopPropagation();
+    const { windowTarget } = currentProfile.settings;
+
+    if (!windowTarget.pattern) {
+      addNotification('No window pattern configured. Go to Settings.', 'error');
+      return;
+    }
+
+    let textToPaste: string;
+    if (result.type === 'link') {
+      const link = result.item as Link;
+      const displayTitle = link.customTitle || link.title;
+      textToPaste = `${displayTitle}\n${link.url}`;
+    } else {
+      const note = result.item as Note;
+      textToPaste = note.content;
+    }
+
+    const pasteResult = await window.electronAPI.focusAndPaste(
+      windowTarget.pattern,
+      windowTarget.matchMode,
+      textToPaste,
+      windowTarget.pressEnterAfterPaste
+    );
+
+    if (!pasteResult.success) {
+      addNotification(pasteResult.error || 'Failed to paste', 'error');
+    }
+  };
+
+  const handleSearchTitleClick = async (e: React.MouseEvent, result: SearchResult) => {
+    e.stopPropagation();
+    try {
+      let textToCopy: string;
+      if (result.type === 'link') {
+        const link = result.item as Link;
+        const displayTitle = link.customTitle || link.title;
+        textToCopy = `${displayTitle}\n${link.url}`;
+      } else {
+        const note = result.item as Note;
+        textToCopy = note.content;
+      }
+      await navigator.clipboard.writeText(textToCopy);
+      addNotification('Copied to clipboard', 'success');
+    } catch {
+      addNotification('Failed to copy', 'error');
+    }
+  };
+
   const handleQuickLabPoll = async (labNum: string) => {
     const { windowTarget, labPollTemplate } = currentProfile.settings;
 
@@ -398,7 +581,7 @@ function Header() {
           onClick={toggleSettings}
           title="Settings"
         >
-          *
+          {isModernFont ? '⚙' : '*'}
         </button>
         <button
           className="btn btn--small btn--danger"
@@ -514,9 +697,25 @@ function Header() {
         )}
 
         <button
+          className="header-search-btn btn btn--small"
+          onClick={() => {
+            setShowSearchPopup(true);
+            setSearchQuery('');
+            setSearchResults([]);
+          }}
+          title="Search links and notes"
+        >
+          🔍
+        </button>
+        <button
           className="header-time-btn btn btn--small"
-          onClick={() => setShowTimeEstimatePopup(true)}
-          title="Send Time Estimate"
+          onClick={() => {
+            setEstimateBreakId('');
+            setEstimateLabNumber('');
+            setIsCustomEstimateLabNumber(false);
+            setShowTimeEstimatePopup(true);
+          }}
+          title="Timer"
         >
           ⏱
         </button>
@@ -573,73 +772,63 @@ function Header() {
               </button>
             </div>
             <div className="lab-popup-content">
-              <div className="time-estimate-field">
-                <label className="lab-popup-label">BREAK / LUNCH (OPTIONAL)</label>
-                <select
-                  className="select"
-                  value={estimateBreakId}
-                  onChange={(e) => setEstimateBreakId(e.target.value)}
-                >
-                  <option value="">No break</option>
-                  {enabledScheduledTimes.map((st) => (
-                    <option key={st.id} value={st.id}>
-                      {st.label} ({formatDuration(st.duration || 15)})
-                    </option>
+              <div className="time-estimate-buttons-row">
+                <div className="lab-buttons-row">
+                  {breakScheduledTimes.map((st) => (
+                    <button
+                      key={st.id}
+                      className={`btn btn--small lab-btn ${estimateBreakId === st.id ? 'lab-btn--active' : ''}`}
+                      onClick={() => setEstimateBreakId(estimateBreakId === st.id ? '' : st.id)}
+                    >
+                      {st.label}
+                    </button>
                   ))}
-                </select>
+                </div>
+                <div className="time-estimate-separator"></div>
+                <div className="lab-buttons-row">
+                  {currentDay?.dayNumber && currentDay?.labCount && currentDay.labCount > 0 && (
+                    <>
+                      {Array.from({ length: currentDay.labCount }, (_, i) => {
+                        const label = `${currentDay.dayNumber}.${i + 1}`;
+                        return (
+                          <button
+                            key={label}
+                            className={`btn btn--small lab-btn ${estimateLabNumber === label && !isCustomEstimateLabNumber ? 'lab-btn--active' : ''}`}
+                            onClick={() => {
+                              if (estimateLabNumber === label && !isCustomEstimateLabNumber) {
+                                setEstimateLabNumber('');
+                              } else {
+                                setEstimateLabNumber(label);
+                                setIsCustomEstimateLabNumber(false);
+                              }
+                            }}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
+                  <input
+                    type="text"
+                    className={`input lab-popup-input-small ${isCustomEstimateLabNumber ? 'lab-popup-input-small--active' : ''}`}
+                    placeholder="..."
+                    value={isCustomEstimateLabNumber ? estimateLabNumber : ''}
+                    onChange={(e) => { setEstimateLabNumber(e.target.value); setIsCustomEstimateLabNumber(true); }}
+                  />
+                </div>
               </div>
-              <label className="time-estimate-checkbox">
+              <div className="time-estimate-lab-time">
+                <label className="lab-popup-label">LAB TIME (MIN)</label>
                 <input
-                  type="checkbox"
-                  checked={estimateIncludeLab}
-                  onChange={(e) => setEstimateIncludeLab(e.target.checked)}
+                  type="number"
+                  className="input lab-popup-input-small"
+                  value={estimateLabTime}
+                  onChange={(e) => setEstimateLabTime(e.target.value)}
+                  min="1"
+                  max="180"
                 />
-                <span>Include Lab Time</span>
-              </label>
-              {estimateIncludeLab && (
-                <>
-                  <div className="lab-label-row">
-                    <label className="lab-popup-label">LAB NUMBER</label>
-                    <label className="lab-popup-label">CUSTOM</label>
-                  </div>
-                  <div className="lab-number-row">
-                    {currentDay?.dayNumber && currentDay?.labCount && currentDay.labCount > 0 && (
-                      <div className="lab-buttons-row">
-                        {Array.from({ length: currentDay.labCount }, (_, i) => {
-                          const label = `${currentDay.dayNumber}.${i + 1}`;
-                          return (
-                            <button
-                              key={label}
-                              className={`btn btn--small lab-btn ${estimateLabNumber === label && !isCustomEstimateLabNumber ? 'lab-btn--active' : ''}`}
-                              onClick={() => { setEstimateLabNumber(label); setIsCustomEstimateLabNumber(false); }}
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <input
-                      type="text"
-                      className={`input lab-popup-input-small ${isCustomEstimateLabNumber ? 'lab-popup-input-small--active' : ''}`}
-                      placeholder="..."
-                      value={isCustomEstimateLabNumber ? estimateLabNumber : ''}
-                      onChange={(e) => { setEstimateLabNumber(e.target.value); setIsCustomEstimateLabNumber(true); }}
-                    />
-                  </div>
-                  <div className="time-estimate-lab-time">
-                    <label className="lab-popup-label">LAB TIME (MIN)</label>
-                    <input
-                      type="number"
-                      className="input lab-popup-input-small"
-                      value={estimateLabTime}
-                      onChange={(e) => setEstimateLabTime(e.target.value)}
-                      min="1"
-                      max="180"
-                    />
-                  </div>
-                </>
-              )}
+              </div>
               <div className="lab-popup-preview">
                 <label className="lab-popup-label">PREVIEW</label>
                 <div className="lab-popup-preview-text">
@@ -669,6 +858,99 @@ function Header() {
               >
                 SEND ESTIMATE
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Popup */}
+      {showSearchPopup && (
+        <div className="lab-popup-overlay" onClick={() => setShowSearchPopup(false)}>
+          <div className="search-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="lab-popup-header">
+              <span className="lab-popup-title">SEARCH</span>
+              <button
+                className="btn btn--small btn--danger"
+                onClick={() => setShowSearchPopup(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="search-popup-content">
+              <input
+                type="text"
+                className="input search-input"
+                placeholder="Search links and notes..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  performSearch(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setShowSearchPopup(false);
+                }}
+                autoFocus
+              />
+              <div className="search-results">
+                {searchQuery.trim() === '' ? (
+                  <div className="search-placeholder">Type to search across all links and notes</div>
+                ) : searchResults.length === 0 ? (
+                  <div className="search-no-results">No results found</div>
+                ) : (
+                  searchResults.map((result, index) => (
+                    <div
+                      key={`${result.item.id}-${index}`}
+                      className="search-result-item"
+                      onClick={() => handleSearchResultClick(result)}
+                    >
+                      <div className="search-result-type">
+                        {result.type === 'link' ? '🔗' : '📝'}
+                      </div>
+                      <div className="search-result-content">
+                        <div
+                          className="search-result-title search-result-title--clickable"
+                          onClick={(e) => handleSearchTitleClick(e, result)}
+                          title="Click to copy"
+                        >
+                          {result.type === 'link'
+                            ? ((result.item as Link).customTitle || (result.item as Link).title)
+                            : (result.item as Note).title}
+                        </div>
+                        <div className="search-result-location">
+                          {result.dayName} › {result.sectionName}
+                        </div>
+                        {result.matchField === 'url' && result.type === 'link' && (
+                          <div className="search-result-url">{(result.item as Link).url}</div>
+                        )}
+                        {result.matchField === 'content' && result.type === 'note' && (
+                          <div className="search-result-snippet">
+                            {(result.item as Note).content.substring(0, 100)}
+                            {(result.item as Note).content.length > 100 ? '...' : ''}
+                          </div>
+                        )}
+                      </div>
+                      <div className="search-result-actions">
+                        {result.type === 'link' && (
+                          <button
+                            className="search-action-btn"
+                            onClick={(e) => handleSearchOpenInChrome(e, (result.item as Link).url)}
+                            title="Open in Chrome"
+                          >
+                            <img src={iconBrowser} alt="Open in Chrome" className="search-action-icon" />
+                          </button>
+                        )}
+                        <button
+                          className="search-action-btn"
+                          onClick={(e) => handleSearchFocusAndPaste(e, result)}
+                          title="Focus window and paste"
+                        >
+                          <img src={iconSlack} alt="Focus & Paste" className="search-action-icon" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>

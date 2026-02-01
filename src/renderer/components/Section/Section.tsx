@@ -241,17 +241,21 @@ function SectionComponent({ dayId, section }: SectionProps) {
                 </button>
               )}
             </div>
-            {/* Read mode: polls button if has polls */}
-            {!isEditMode && hasPollsToShow && (
+            {/* Read mode: polls button wrapper (always rendered for alignment) */}
+            {!isEditMode && (
               <div className="section-poll-btn-wrapper">
-                <button
-                  className={`section-action-btn section-action-btn--visible ${showPolls ? 'section-action-btn--active' : ''}`}
-                  onClick={() => setShowPolls(!showPolls)}
-                  title={showPolls ? 'Hide polls' : 'Show polls'}
-                >
-                  📊
-                </button>
-                <span className="section-poll-badge-inline">{newPollsCount}</span>
+                {hasPollsToShow && (
+                  <>
+                    <button
+                      className={`section-action-btn section-action-btn--visible ${showPolls ? 'section-action-btn--active' : ''}`}
+                      onClick={() => setShowPolls(!showPolls)}
+                      title={showPolls ? 'Hide polls' : 'Show polls'}
+                    >
+                      📊
+                    </button>
+                    <span className="section-poll-badge-inline">{newPollsCount}</span>
+                  </>
+                )}
               </div>
             )}
             {/* Edit mode: all edit buttons */}
@@ -379,6 +383,21 @@ function SectionComponent({ dayId, section }: SectionProps) {
                 onChange={(e) => {
                   setLabNotesText(e.target.value);
                   updateLabNotes(dayId, section.id, e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const target = e.target as HTMLTextAreaElement;
+                    const start = target.selectionStart;
+                    const end = target.selectionEnd;
+                    const newValue = labNotesText.substring(0, start) + '\t' + labNotesText.substring(end);
+                    setLabNotesText(newValue);
+                    updateLabNotes(dayId, section.id, newValue);
+                    // Set cursor position after the tab
+                    setTimeout(() => {
+                      target.selectionStart = target.selectionEnd = start + 1;
+                    }, 0);
+                  }
                 }}
                 autoFocus
               />

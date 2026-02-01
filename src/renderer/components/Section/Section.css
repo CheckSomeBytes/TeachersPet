@@ -1,14 +1,14 @@
 .section {
-  padding: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 .section-header {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
   border-bottom: 2px dashed var(--color-border);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
   min-height: 20px;
 }
 
@@ -125,8 +125,9 @@
 .section-lab-wrapper {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 2px;
-  min-width: 50px;
+  min-width: 60px;
 }
 
 .section-lab-badge {
@@ -322,8 +323,10 @@
 .section-poll-btn-wrapper {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 2px;
   line-height: 1;
+  min-width: 40px;
 }
 
 .section-poll-btn-wrapper .section-action-btn,

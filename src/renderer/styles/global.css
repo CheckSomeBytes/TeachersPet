@@ -1,3 +1,12 @@
+/* Lexend font for modern theme */
+@font-face {
+  font-family: 'Lexend';
+  src: url('../assets/Lexend-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* CSS Custom Properties for theming */
 :root {
   --color-primary: #4a9eff;

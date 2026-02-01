@@ -7,13 +7,13 @@
       "settings": {
         "windowTarget": {
           "matchMode": "contains",
-          "pattern": "sec541-thompson",
+          "pattern": "sec541-thompstttt",
           "pressEnterAfterPaste": false
         },
         "checkLinksOnStartup": true,
         "theme": {
           "name": "Sunny Beach Day",
-          "isCustom": true,
+          "isCustom": false,
           "fontFamily": "\"Press Start 2P\", monospace",
           "colors": {
             "primary": "#2A9D8F",
@@ -28,35 +28,40 @@
             "success": "#2A9D8F"
           }
         },
+        "fontSize": "medium",
         "labPollTemplate": "/poll \"How are we doing on Lab <LAB_NUMBER>? :lab_coat:\" \":exclamation: Having Issues\" \":timer_clock:Need More Time\" \":white_check_mark: Finished the Lab!\" no-preview anonymous",
         "timezone": "America/New_York",
         "scheduledTimes": [
           {
             "id": "6831beba-3e76-493e-99be-e230dccde986",
-            "label": "Morning Break",
+            "label": "AM Break",
             "time": "10:30",
             "enabled": true,
-            "duration": 20
+            "duration": 20,
+            "isBreak": true
           },
           {
             "id": "fb9e0714-c04a-455d-a4f4-6242e2b2f481",
             "label": "Lunch",
             "time": "12:15",
             "enabled": true,
-            "duration": 75
+            "duration": 75,
+            "isBreak": true
           },
           {
             "id": "20d5e069-4dd1-400a-b917-94079ebadd25",
-            "label": "Afternoon Break",
+            "label": "PM Break",
             "time": "15:00",
             "enabled": true,
-            "duration": 20
+            "duration": 20,
+            "isBreak": true
           },
           {
             "id": "4db563b4-3328-44fb-949d-1cbead71197b",
             "label": "Class End",
             "time": "17:00",
-            "enabled": true
+            "enabled": true,
+            "duration": 15
           }
         ],
         "breakAlertTheme": {
@@ -77,7 +82,7 @@
           }
         },
         "breakAlertMinutes": 5,
-        "lastLaunchDate": "2026-01-31T18:34:49.014Z"
+        "lastLaunchDate": "2026-02-01T07:36:16.630Z"
       },
       "days": [
         {
@@ -123,7 +128,7 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "Youtube - Evading Logging in the Cloud  Disrupting and Bypassing AWS CloudTrail - Nick Frichette",
-                  "lastChecked": "2026-01-31T18:34:49.742Z"
+                  "lastChecked": "2026-02-01T07:36:17.371Z"
                 }
               ],
               "polls": []
@@ -181,7 +186,7 @@
               "id": "fa28d2bc-f896-48c0-84cc-6e9911883247",
               "name": "Host Visibility",
               "order": 2,
-              "isCollapsed": true,
+              "isCollapsed": false,
               "items": [
                 {
                   "type": "link",
@@ -190,7 +195,7 @@
                   "title": "GitHub - Yamato-Security/EnableWindowsLogSettings: Documentation and scripts to properly enable Windows event logs.",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:34:50.849Z"
+                  "lastChecked": "2026-02-01T07:36:18.470Z"
                 },
                 {
                   "type": "link",
@@ -199,7 +204,7 @@
                   "title": "Greater Visibility Through PowerShell Logging | Mandiant | Google Cloud Blog",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:34:55.733Z"
+                  "lastChecked": "2026-02-01T07:36:22.756Z"
                 },
                 {
                   "type": "link",
@@ -208,7 +213,7 @@
                   "title": "Advanced security auditing FAQ - Windows 10 | Microsoft Learn",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:34:56.265Z"
+                  "lastChecked": "2026-02-01T07:36:23.293Z"
                 },
                 {
                   "type": "link",
@@ -217,7 +222,7 @@
                   "title": "auditd/audit.rules at master · Neo23x0/auditd · GitHub",
                   "order": 3,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:34:56.836Z"
+                  "lastChecked": "2026-02-01T07:36:23.968Z"
                 }
               ],
               "polls": []
@@ -236,7 +241,7 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "Slack - Our Journey Migrating to AWS IMDSv2 |  Engineering at Slack",
-                  "lastChecked": "2026-01-31T18:34:57.424Z"
+                  "lastChecked": "2026-02-01T07:36:24.548Z"
                 }
               ]
             },
@@ -261,7 +266,7 @@
                   "title": "Logs and metrics | Docker Docs",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:34:58.111Z"
+                  "lastChecked": "2026-02-01T07:36:25.257Z"
                 },
                 {
                   "type": "link",
@@ -270,7 +275,7 @@
                   "title": "Kubernetes Components | Kubernetes",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:34:58.718Z"
+                  "lastChecked": "2026-02-01T07:36:25.871Z"
                 },
                 {
                   "type": "link",
@@ -279,7 +284,7 @@
                   "title": "https://kubernetes.io/images/docs/kubernetes-cluster-architecture.svg",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:34:59.260Z"
+                  "lastChecked": "2026-02-01T07:36:26.420Z"
                 },
                 {
                   "type": "link",
@@ -288,7 +293,7 @@
                   "title": "Auditing | Kubernetes",
                   "order": 3,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:34:59.804Z"
+                  "lastChecked": "2026-02-01T07:36:26.961Z"
                 },
                 {
                   "type": "link",
@@ -297,7 +302,7 @@
                   "title": "Pod Security Policies | Kubernetes",
                   "order": 4,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:35:00.365Z"
+                  "lastChecked": "2026-02-01T07:36:27.507Z"
                 }
               ],
               "polls": []
@@ -306,7 +311,7 @@
               "id": "85fa6247-91f6-4b6a-8714-06105aacaa4a",
               "name": "Operational Logging Techniques",
               "order": 6,
-              "isCollapsed": false,
+              "isCollapsed": true,
               "items": [
                 {
                   "type": "link",
@@ -315,7 +320,7 @@
                   "title": "AWS’s Hidden Threat: AMBERSQUID Cloud-Native Cryptojacking Operation | Sysdig",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:35:01.015Z"
+                  "lastChecked": "2026-02-01T07:36:28.151Z"
                 },
                 {
                   "type": "link",
@@ -324,7 +329,7 @@
                   "title": "Service control policies (SCPs) - AWS Organizations",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:35:01.716Z"
+                  "lastChecked": "2026-02-01T07:36:28.836Z"
                 },
                 {
                   "type": "link",
@@ -333,7 +338,7 @@
                   "title": "Overview of Azure Policy - Azure Policy | Microsoft Learn",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:35:02.366Z"
+                  "lastChecked": "2026-02-01T07:36:29.461Z"
                 }
               ],
               "polls": []
@@ -375,7 +380,7 @@
               "id": "fc5bdd9a-3837-49f1-a8d8-46762b0ba59c",
               "name": "Cross Account Role Persistence",
               "order": 2,
-              "isCollapsed": false,
+              "isCollapsed": true,
               "items": [
                 {
                   "type": "link",
@@ -384,7 +389,7 @@
                   "title": "GitHub - CheckSomeBytes/aws-role-call",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:35:03.511Z"
+                  "lastChecked": "2026-02-01T07:36:30.357Z"
                 },
                 {
                   "type": "link",
@@ -393,10 +398,11 @@
                   "title": "GitHub - fwdcloudsec/known_aws_accounts: List of known AWS accounts",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:35:04.534Z"
+                  "lastChecked": "2026-02-01T07:36:31.411Z"
                 }
               ],
-              "polls": []
+              "polls": [],
+              "assignedLab": "3.1"
             },
             {
               "id": "522cf9d1-3032-47b2-bf23-128e0b58e62c",
@@ -441,7 +447,7 @@
                       "status": "ok"
                     }
                   ],
-                  "lastChecked": "2026-01-31T18:35:08.068Z",
+                  "lastChecked": "2026-02-01T07:36:34.815Z",
                   "customTitle": "Regex Resources"
                 }
               ],
@@ -461,7 +467,7 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "AWS Inspector agentless EC2 vulnerability assessments",
-                  "lastChecked": "2026-01-31T18:35:08.891Z"
+                  "lastChecked": "2026-02-01T07:36:35.674Z"
                 }
               ],
               "polls": []
@@ -479,7 +485,7 @@
                   "title": "Ecosystem of Insights: Building Operation Dashboards That Enable Teams - YouTube",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:35:10.084Z",
+                  "lastChecked": "2026-02-01T07:36:36.823Z",
                   "customTitle": "Youtube - Ecosystem of Insights"
                 },
                 {
@@ -489,7 +495,7 @@
                   "title": "Bridging the Gap: Improving Rules Effectiveness by Integrating Detection and Response - YouTube",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:35:11.400Z",
+                  "lastChecked": "2026-02-01T07:36:37.996Z",
                   "customTitle": "Youtube - Bridging the Gap: Improving Rules Effectiveness"
                 }
               ],
@@ -520,13 +526,13 @@
               "items": [],
               "polls": [],
               "assignedLab": "4.1",
-              "labNotes": "teset"
+              "labNotes": ""
             },
             {
               "id": "a9efd2ee-6334-4b5d-93a2-a9e1c6f6f454",
               "name": "M365 and XDR",
               "order": 2,
-              "isCollapsed": true,
+              "isCollapsed": false,
               "items": [
                 {
                   "type": "link",
@@ -535,7 +541,7 @@
                   "title": "Detecting suspicious email forwarding rules in Office 365 | Red Canary",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-01-31T18:35:12.247Z"
+                  "lastChecked": "2026-02-01T07:36:38.755Z"
                 }
               ],
               "polls": [
@@ -544,7 +550,7 @@
                   "title": "Productivity Suite",
                   "content": "/poll \"What productivity suite (Email, Calendar, Documents) does your org primarily use?\" \"M365\":m365-logo: \"Google Workspace\":google-workspace: \"On-Premise/Exchange\":office: \"Other\":alphabet-yellow-question: no-preview anonymous",
                   "order": 0,
-                  "sent": true
+                  "sent": false
                 }
               ]
             },
@@ -563,7 +569,8 @@
               "order": 4,
               "isCollapsed": false,
               "items": [],
-              "polls": []
+              "polls": [],
+              "assignedLab": "4.3"
             },
             {
               "id": "a6c49b59-9b0f-4bdd-949b-79c7296eed46",
@@ -571,7 +578,8 @@
               "order": 5,
               "isCollapsed": false,
               "items": [],
-              "polls": []
+              "polls": [],
+              "assignedLab": "4.4"
             },
             {
               "id": "b66dd111-c06f-4fd0-a937-5edaceac4e62",
@@ -579,7 +587,8 @@
               "order": 6,
               "isCollapsed": false,
               "items": [],
-              "polls": []
+              "polls": [],
+              "assignedLab": "4.5"
             }
           ],
           "dayNumber": 4,

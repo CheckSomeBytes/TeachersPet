@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useAppStore } from './stores/appStore';
+import { FONT_SIZE_PRESETS_RETRO, FONT_SIZE_PRESETS_MODERN } from '../shared/types';
 import Layout from './components/Layout/Layout';
 import Notifications from './components/common/Notifications';
 import SettingsModal from './components/Settings/SettingsModal';
@@ -33,7 +34,26 @@ function App() {
     root.style.setProperty('--color-danger', theme.colors.danger);
     root.style.setProperty('--color-success', theme.colors.success);
     root.style.setProperty('--font-family', theme.fontFamily);
-  }, [currentProfile.settings.theme, currentProfile.settings.breakAlertTheme, isBreakAlertActive]);
+
+    // Apply modern font smoothing for non-retro fonts
+    const isModernFont = theme.fontFamily.includes('Lexend') ||
+                         theme.fontFamily === 'sans-serif' ||
+                         theme.fontFamily.includes('Courier');
+    document.body.style.setProperty('-webkit-font-smoothing', isModernFont ? 'antialiased' : 'none');
+    document.body.style.setProperty('-moz-osx-font-smoothing', isModernFont ? 'grayscale' : 'unset');
+
+    // Set data attribute for modern font styling in CSS
+    root.dataset.fontStyle = isModernFont ? 'modern' : 'retro';
+
+    // Apply font size - use larger sizes for modern fonts
+    const fontSize = currentProfile.settings.fontSize || 'medium';
+    const sizePresets = isModernFont ? FONT_SIZE_PRESETS_MODERN : FONT_SIZE_PRESETS_RETRO;
+    const sizes = sizePresets[fontSize];
+    root.style.setProperty('--font-size-xs', `${sizes.xs}px`);
+    root.style.setProperty('--font-size-sm', `${sizes.sm}px`);
+    root.style.setProperty('--font-size-base', `${sizes.base}px`);
+    root.style.setProperty('--font-size-lg', `${sizes.lg}px`);
+  }, [currentProfile.settings.theme, currentProfile.settings.breakAlertTheme, currentProfile.settings.fontSize, isBreakAlertActive]);
 
   if (isLoading) {
     return (
