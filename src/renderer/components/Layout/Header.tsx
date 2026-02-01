@@ -194,14 +194,17 @@ function Header() {
 
     let totalMinutes = labMinutes;
     const parts: string[] = [];
+    const timerParts: string[] = [];
 
     if (hasLab) {
       parts.push(`:lab_coat: Lab ${estimateLabNumber.trim()} (${formatDuration(labMinutes)})`);
+      timerParts.push(`Lab ${estimateLabNumber.trim()} (${formatDuration(labMinutes)})`);
     }
 
     if (selectedBreak) {
       totalMinutes += selectedBreak.duration || 15;
       parts.push(`:timer_clock: ${selectedBreak.label} (${formatDuration(selectedBreak.duration || 15)})`);
+      timerParts.push(`${selectedBreak.label} (${formatDuration(selectedBreak.duration || 15)})`);
     }
 
     const returnDate = new Date(nowInTz.getTime() + totalMinutes * 60 * 1000);
@@ -212,7 +215,7 @@ function Header() {
     });
 
     const timerMessage = totalMinutes > 0
-      ? parts.join(' + ')
+      ? timerParts.join(' + ')
       : 'Timer';
 
     const message = totalMinutes > 0

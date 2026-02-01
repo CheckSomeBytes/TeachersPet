@@ -11,7 +11,7 @@
 .settings-modal {
   width: 90%;
   max-width: 500px;
-  max-height: 80%;
+  height: 80%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
