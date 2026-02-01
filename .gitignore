@@ -6,7 +6,7 @@ out/
 dist/
 
 # Config data (contains user data)
-#data/
+data/
 
 # Logs
 *.log
