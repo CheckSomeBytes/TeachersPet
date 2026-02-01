@@ -80,6 +80,10 @@ src/renderer/components/
 
 Five preset 8-bit themes available, plus custom theme editor. Themes use CSS custom properties. Break alert system automatically switches theme when approaching scheduled break times.
 
+## Important Rules
+
+- When making code changes, ensure the change applies across all themes unless specifically stated otherwise.
+
 ## Important Patterns
 
 - Link checking uses streaming results via IPC (results sent individually, not batched)

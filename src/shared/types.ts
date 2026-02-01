@@ -37,6 +37,7 @@ export interface Settings {
   breakAlertTheme: Theme | null; // Theme to use when within 5 minutes of a break
   breakAlertMinutes: number; // Minutes before break to trigger alert theme (default 5)
   lastLaunchDate?: string; // ISO date string of last launch
+  timerFontFamily?: string; // Font family for countdown timer (falls back to theme.fontFamily)
 }
 
 // Font size presets (in pixels) - separate presets for retro (pixel) and modern fonts

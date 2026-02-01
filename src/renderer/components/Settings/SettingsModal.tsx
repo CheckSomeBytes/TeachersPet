@@ -736,7 +736,7 @@ function SettingsModal() {
                         ? 'settings-theme-preset--active'
                         : ''
                     }`}
-                    onClick={() => updateSettings({ theme: preset })}
+                    onClick={() => updateSettings({ theme: { ...preset, fontFamily: settings.theme.fontFamily } })}
                   >
                     <div className="settings-theme-preview">
                       <div
@@ -803,6 +803,26 @@ function SettingsModal() {
                     })
                   }
                 >
+                  <option value='"Press Start 2P", monospace'>Press Start 2P (8-bit)</option>
+                  <option value='"Lexend", sans-serif'>Lexend (Modern)</option>
+                  <option value='"Courier New", monospace'>Courier New</option>
+                  <option value='monospace'>System Monospace</option>
+                  <option value='sans-serif'>System Sans-Serif</option>
+                </select>
+              </div>
+
+              <div className="settings-field">
+                <label className="settings-label">TIMER FONT FAMILY</label>
+                <select
+                  className="select"
+                  value={settings.timerFontFamily || ''}
+                  onChange={(e) =>
+                    updateSettings({
+                      timerFontFamily: e.target.value || undefined,
+                    })
+                  }
+                >
+                  <option value="">Same as app</option>
                   <option value='"Press Start 2P", monospace'>Press Start 2P (8-bit)</option>
                   <option value='"Lexend", sans-serif'>Lexend (Modern)</option>
                   <option value='"Courier New", monospace'>Courier New</option>

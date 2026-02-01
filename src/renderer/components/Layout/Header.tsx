@@ -271,7 +271,7 @@ function Header() {
       accent: theme.colors.accent,
       success: theme.colors.success,
       danger: theme.colors.danger,
-      fontFamily: theme.fontFamily,
+      fontFamily: currentProfile.settings.timerFontFamily || theme.fontFamily,
     });
     addNotification('Countdown timer opened!', 'success');
   };
@@ -312,7 +312,7 @@ function Header() {
         accent: theme.colors.accent,
         success: theme.colors.success,
         danger: theme.colors.danger,
-        fontFamily: theme.fontFamily,
+        fontFamily: currentProfile.settings.timerFontFamily || theme.fontFamily,
       });
 
       addNotification('Time estimate sent and timer opened!', 'success');

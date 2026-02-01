@@ -27,3 +27,5 @@ Thumbs.db
 .env.local
 .env.*.local
 data/config.json
+
+helper/

@@ -613,7 +613,7 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
       margin-bottom: 20px;
       max-width: 100%;
     }
-    .message { font-size: 12px; color: ${theme.textMuted}; word-wrap: break-word; line-height: 1.8; text-align: center; }
+    .message { font-size: ${theme.fontFamily.includes('Lexend') || theme.fontFamily.includes('sans-serif') || theme.fontFamily === 'sans-serif' ? '16px' : '12px'}; color: ${theme.textMuted}; word-wrap: break-word; line-height: 1.8; text-align: center; }
     .message-line { display: block; }
     .message-separator { color: ${theme.textMuted}; font-size: 10px; }
     .message-edit-btn {
@@ -649,7 +649,7 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
       outline: none;
     }
     .timer {
-      font-size: 48px;
+      font-size: 144px;
       font-weight: bold;
       color: ${theme.accent};
       font-family: ${theme.fontFamily};

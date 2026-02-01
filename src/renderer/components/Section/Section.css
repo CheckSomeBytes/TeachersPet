@@ -331,17 +331,17 @@
 
 .section-poll-btn-wrapper .section-action-btn,
 .section-poll-btn-wrapper .section-action-btn--visible {
-  font-size: 12px;
-  padding: 0 2px;
+  font-size: 16px;
+  padding: 2px 4px;
   line-height: 1;
 }
 
 .section-poll-badge-inline {
   background-color: var(--color-accent);
   color: var(--color-background);
-  font-size: 7px;
-  min-width: 12px;
-  height: 12px;
+  font-size: var(--font-size-xs);
+  min-width: 16px;
+  height: 16px;
   border-radius: 0;
   display: flex;
   align-items: center;
