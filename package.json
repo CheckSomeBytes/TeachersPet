@@ -1,6 +1,6 @@
 {
   "name": "teacherspet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A link and notes manager for instructors",
   "author": "CheckSomeBytes",
   "main": "out/main/main.js",
@@ -40,7 +40,10 @@
       "out/**/*"
     ],
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "publisherName": "CheckSomeBytes",
       "icon": "build/icon.png",
       "certificateFile": null,
