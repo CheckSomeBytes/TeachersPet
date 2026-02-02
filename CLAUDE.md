@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SANS Notes is a Windows desktop application (Electron + React + TypeScript) for SANS instructors to manage and share links with students during class sessions. Features a retro 8-bit themed UI with multi-profile support, link health checking, and window automation for pasting URLs into target applications (e.g., Zoom chat).
+TeachersPet is a Windows desktop application (Electron + React + TypeScript) for instructors to manage and share links with students during class sessions. Features a retro 8-bit themed UI with multi-profile support, link health checking, and window automation for pasting URLs into target applications (e.g., Zoom chat).
 
 ## Development Commands
 

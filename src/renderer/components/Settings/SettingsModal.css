@@ -518,3 +518,41 @@ input.settings-day-lab-input.input {
 .settings-theme-presets--small .settings-theme-name {
   font-size: 6px;
 }
+
+/* Updates tab styles */
+.settings-update-info {
+  margin-top: var(--spacing-md);
+}
+
+.settings-update-available {
+  color: var(--color-accent);
+  font-weight: bold;
+}
+
+.settings-update-current {
+  color: var(--color-success);
+}
+
+.settings-update-ready {
+  color: var(--color-success);
+  font-weight: bold;
+}
+
+.settings-download-progress {
+  margin-top: var(--spacing-md);
+}
+
+.settings-progress-bar {
+  width: 100%;
+  height: 20px;
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  margin-top: var(--spacing-sm);
+  overflow: hidden;
+}
+
+.settings-progress-bar-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
+}

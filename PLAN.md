@@ -1,4 +1,4 @@
-# SANS Notes - Implementation Plan
+# TeachersPet - Implementation Plan
 
 ## Overview
 A Windows desktop app (Electron + React) for managing and sharing links with students during class sessions. Features an 8-bit theme, compact UI, and smart link management.
@@ -392,7 +392,7 @@ async function fetchPageTitle(url: string): Promise<string> {
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ ☰ │ SANS Notes              │ ⚙️ Settings      │
+│ ☰ │ TeachersPet             │ ⚙️ Settings      │
 ├───┴─────────────────────────────────────────────┤
 │ ┌─────────┐                                     │
 │ │ Day 1   │  ═══ Morning Session ═══            │

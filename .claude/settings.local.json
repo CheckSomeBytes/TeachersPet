@@ -5,7 +5,8 @@
       "Bash(npm create:*)",
       "WebFetch(domain:coolors.co)",
       "Bash(npx tsc:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "mcp__playwright__browser_navigate"
     ]
   }
 }

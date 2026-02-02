@@ -86,6 +86,56 @@ contextBridge.exposeInMainWorld('electronAPI', {
   quitApp: (): Promise<void> => {
     return ipcRenderer.invoke(IPC_CHANNELS.QUIT_APP);
   },
+  minimizeApp: (): Promise<void> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.MINIMIZE_APP);
+  },
+
+  // Auto-updater operations
+  checkForUpdates: (): Promise<{
+    updateAvailable: boolean;
+    currentVersion: string;
+    latestVersion?: string;
+    isDev?: boolean;
+    error?: string;
+  }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.CHECK_FOR_UPDATES);
+  },
+
+  downloadUpdate: (): Promise<{ success: boolean; error?: string }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.DOWNLOAD_UPDATE);
+  },
+
+  installUpdate: (): Promise<{ success: boolean; error?: string }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.INSTALL_UPDATE);
+  },
+
+  getAppVersion: (): Promise<string> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.GET_APP_VERSION);
+  },
+
+  onUpdateAvailable: (callback: (info: { version: string; releaseNotes?: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, info: { version: string; releaseNotes?: string }) => callback(info);
+    ipcRenderer.on('update-available', handler);
+    return () => ipcRenderer.removeListener('update-available', handler);
+  },
+
+  onDownloadProgress: (callback: (progress: { percent: number; transferred: number; total: number }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, progress: { percent: number; transferred: number; total: number }) => callback(progress);
+    ipcRenderer.on('download-progress', handler);
+    return () => ipcRenderer.removeListener('download-progress', handler);
+  },
+
+  onUpdateDownloaded: (callback: (info: { version: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, info: { version: string }) => callback(info);
+    ipcRenderer.on('update-downloaded', handler);
+    return () => ipcRenderer.removeListener('update-downloaded', handler);
+  },
+
+  onUpdateError: (callback: (error: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, error: string) => callback(error);
+    ipcRenderer.on('update-error', handler);
+    return () => ipcRenderer.removeListener('update-error', handler);
+  },
 });
 
 // Type declaration for the renderer
@@ -123,6 +173,21 @@ declare global {
         }
       ) => Promise<boolean>;
       quitApp: () => Promise<void>;
+      minimizeApp: () => Promise<void>;
+      checkForUpdates: () => Promise<{
+        updateAvailable: boolean;
+        currentVersion: string;
+        latestVersion?: string;
+        isDev?: boolean;
+        error?: string;
+      }>;
+      downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
+      installUpdate: () => Promise<{ success: boolean; error?: string }>;
+      getAppVersion: () => Promise<string>;
+      onUpdateAvailable: (callback: (info: { version: string; releaseNotes?: string }) => void) => () => void;
+      onDownloadProgress: (callback: (progress: { percent: number; transferred: number; total: number }) => void) => () => void;
+      onUpdateDownloaded: (callback: (info: { version: string }) => void) => () => void;
+      onUpdateError: (callback: (error: string) => void) => () => void;
     };
   }
 }

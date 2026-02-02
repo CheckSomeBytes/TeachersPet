@@ -1,16 +1,19 @@
 {
-  "name": "sans-notes",
+  "name": "teacherspet",
   "version": "1.0.0",
-  "description": "A link and notes manager for SANS instructors",
+  "description": "A link and notes manager for instructors",
+  "author": "CheckSomeBytes",
   "main": "out/main/main.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "package": "electron-builder"
+    "package": "electron-builder",
+    "package:win": "electron-builder --win"
   },
   "dependencies": {
-"uuid": "^9.0.0",
+    "electron-updater": "^6.7.3",
+    "uuid": "^9.0.0",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
@@ -28,16 +31,30 @@
     "vite": "^5.0.10"
   },
   "build": {
-    "appId": "com.sans.notes",
-    "productName": "SANS Notes",
+    "appId": "com.teacherspet.app",
+    "productName": "TeachersPet",
     "directories": {
-      "output": "release"
+      "output": "dist"
     },
     "files": [
       "out/**/*"
     ],
     "win": {
-      "target": "nsis"
-    }
+      "target": ["nsis", "portable"],
+      "publisherName": "CheckSomeBytes",
+      "icon": "build/icon.png",
+      "certificateFile": null,
+      "certificatePassword": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "CheckSomeBytes",
+      "repo": "TeachersPet"
+    },
+    "forceCodeSigning": false
   }
 }

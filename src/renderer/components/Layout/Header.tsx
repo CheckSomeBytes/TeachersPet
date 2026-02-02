@@ -43,6 +43,9 @@ function Header() {
     setBreakAlertActive,
     getCurrentProfile,
     openSettingsToTab,
+    openLabNotesLabNumber,
+    setOpenLabNotesLabNumber,
+    updateLabNotes,
   } = useAppStore();
 
   const currentProfile = getCurrentProfile();
@@ -58,6 +61,14 @@ function Header() {
   const [isCustomEstimateLabNumber, setIsCustomEstimateLabNumber] = useState(false);
   const [estimateLabTime, setEstimateLabTime] = useState('30');
   const [estimateBreakId, setEstimateBreakId] = useState<string>('');
+
+  // Custom timer mode state
+  const [isCustomTimerMode, setIsCustomTimerMode] = useState(false);
+  const [customTimerMinutes, setCustomTimerMinutes] = useState('10');
+  const [customTimerMessage, setCustomTimerMessage] = useState('');
+
+  // Lab notes popup state
+  const [labNotesText, setLabNotesText] = useState('');
 
   // Search popup state
   const [showSearchPopup, setShowSearchPopup] = useState(false);
@@ -80,6 +91,13 @@ function Header() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Sync lab notes text when opening a lab notes popup
+  useEffect(() => {
+    if (openLabNotesLabNumber) {
+      setLabNotesText(currentProfile.settings.labNotes?.[openLabNotesLabNumber] || '');
+    }
+  }, [openLabNotesLabNumber]);
 
   // Get current time in the selected timezone
   const getCurrentTimeInTimezone = () => {
@@ -319,6 +337,28 @@ function Header() {
     } else {
       addNotification(result.error || 'Failed to send time estimate', 'error');
     }
+  };
+
+  const handleOpenCustomTimer = async () => {
+    const minutes = parseInt(customTimerMinutes) || 0;
+    if (minutes <= 0) {
+      addNotification('Please enter a valid number of minutes', 'error');
+      return;
+    }
+
+    const message = customTimerMessage.trim() || `${formatDuration(minutes)} Timer`;
+    const theme = currentProfile.settings.theme;
+    await window.electronAPI.openCountdownTimer(minutes, message, {
+      background: theme.colors.background,
+      text: theme.colors.text,
+      textMuted: theme.colors.textMuted,
+      accent: theme.colors.accent,
+      success: theme.colors.success,
+      danger: theme.colors.danger,
+      fontFamily: currentProfile.settings.timerFontFamily || theme.fontFamily,
+    });
+    addNotification('Countdown timer opened!', 'success');
+    setShowTimeEstimatePopup(false);
   };
 
   const handleSendLabPoll = async () => {
@@ -587,6 +627,13 @@ function Header() {
           {isModernFont ? '⚙' : '*'}
         </button>
         <button
+          className="btn btn--small"
+          onClick={() => window.electronAPI.minimizeApp()}
+          title="Minimize"
+        >
+          _
+        </button>
+        <button
           className="btn btn--small btn--danger"
           onClick={() => window.electronAPI.quitApp()}
           title="Exit"
@@ -716,18 +763,12 @@ function Header() {
             setEstimateBreakId('');
             setEstimateLabNumber('');
             setIsCustomEstimateLabNumber(false);
+            setIsCustomTimerMode(false);
             setShowTimeEstimatePopup(true);
           }}
           title="Timer"
         >
           ⏱
-        </button>
-        <button
-          className="header-lab-btn btn btn--small"
-          onClick={() => setShowLabPopup(true)}
-          title="Send Lab Poll"
-        >
-          🧪
         </button>
       </div>
 
@@ -744,8 +785,10 @@ function Header() {
               return (
                 <button
                   key={label}
-                  className={`btn btn--small lab-bar-btn ${isAssigned ? 'lab-bar-btn--assigned' : ''}`}
-                  onClick={() => handleQuickLabPoll(label)}
+                  className={`btn btn--small lab-bar-btn ${isAssigned ? 'lab-bar-btn--assigned' : ''} ${currentProfile.settings.labNotes?.[label] ? 'lab-bar-btn--has-notes' : ''}`}
+                  onClick={() => {
+                    setOpenLabNotesLabNumber(label);
+                  }}
                   draggable={isEditMode}
                   onDragStart={(e) => {
                     e.dataTransfer.setData('application/lab-assign', JSON.stringify({ labNumber: label }));
@@ -761,106 +804,214 @@ function Header() {
         </div>
       )}
 
-      {/* Time Estimate Popup */}
-      {showTimeEstimatePopup && (
-        <div className="lab-popup-overlay" onClick={() => setShowTimeEstimatePopup(false)}>
+      {/* Lab Notes Popup */}
+      {openLabNotesLabNumber && (
+        <div className="lab-popup-overlay lab-popup-overlay--top-anchored" onClick={() => setOpenLabNotesLabNumber(null)}>
           <div className="lab-popup" onClick={(e) => e.stopPropagation()}>
             <div className="lab-popup-header">
-              <span className="lab-popup-title">TIME ESTIMATE</span>
-              <button
-                className="btn btn--small btn--danger"
-                onClick={() => setShowTimeEstimatePopup(false)}
-              >
-                ✕
-              </button>
+              <span className="lab-popup-title">Lab {openLabNotesLabNumber} Notes</span>
+              <div className="lab-popup-header-right">
+                <button
+                  className="btn btn--small btn--success"
+                  onClick={() => handleQuickLabPoll(openLabNotesLabNumber)}
+                  title="Send lab poll to target window"
+                >
+                  🧪 SEND POLL
+                </button>
+                <button
+                  className="btn btn--small btn--danger"
+                  onClick={() => setOpenLabNotesLabNumber(null)}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             <div className="lab-popup-content">
-              <div className="time-estimate-buttons-row">
-                <div className="lab-buttons-row">
-                  {breakScheduledTimes.map((st) => (
-                    <button
-                      key={st.id}
-                      className={`btn btn--small lab-btn ${estimateBreakId === st.id ? 'lab-btn--active' : ''}`}
-                      onClick={() => setEstimateBreakId(estimateBreakId === st.id ? '' : st.id)}
-                    >
-                      {st.label}
-                    </button>
-                  ))}
+              <textarea
+                className="textarea"
+                style={{ width: '100%', minHeight: '150px', resize: 'vertical' }}
+                placeholder="Enter your lab notes here..."
+                value={labNotesText}
+                onChange={(e) => {
+                  setLabNotesText(e.target.value);
+                  updateLabNotes(openLabNotesLabNumber, e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const target = e.target as HTMLTextAreaElement;
+                    const start = target.selectionStart;
+                    const end = target.selectionEnd;
+                    const newValue = labNotesText.substring(0, start) + '\t' + labNotesText.substring(end);
+                    setLabNotesText(newValue);
+                    updateLabNotes(openLabNotesLabNumber, newValue);
+                    setTimeout(() => {
+                      target.selectionStart = target.selectionEnd = start + 1;
+                    }, 0);
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Time Estimate Popup */}
+      {showTimeEstimatePopup && (
+        <div className="lab-popup-overlay lab-popup-overlay--top-anchored" onClick={() => setShowTimeEstimatePopup(false)}>
+          <div className="lab-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="lab-popup-header">
+              <span className="lab-popup-title">LAUNCH TIMER</span>
+              <div className="lab-popup-header-right">
+                <div
+                  className={`time-estimate-mode-toggle ${isCustomTimerMode ? 'time-estimate-mode-toggle--custom' : ''}`}
+                  onClick={() => setIsCustomTimerMode(!isCustomTimerMode)}
+                >
+                  <span className={`time-estimate-mode-label ${!isCustomTimerMode ? 'time-estimate-mode-label--active' : ''}`}>STANDARD</span>
+                  <div className="time-estimate-mode-track">
+                    <div className="time-estimate-mode-thumb" />
+                  </div>
+                  <span className={`time-estimate-mode-label ${isCustomTimerMode ? 'time-estimate-mode-label--active' : ''}`}>CUSTOM</span>
                 </div>
-                <div className="time-estimate-separator"></div>
-                <div className="lab-buttons-row">
-                  {currentDay?.dayNumber && currentDay?.labCount && currentDay.labCount > 0 && (
-                    <>
-                      {Array.from({ length: currentDay.labCount }, (_, i) => {
-                        const label = `${currentDay.dayNumber}.${i + 1}`;
-                        return (
-                          <button
-                            key={label}
-                            className={`btn btn--small lab-btn ${estimateLabNumber === label && !isCustomEstimateLabNumber ? 'lab-btn--active' : ''}`}
-                            onClick={() => {
-                              if (estimateLabNumber === label && !isCustomEstimateLabNumber) {
-                                setEstimateLabNumber('');
-                              } else {
-                                setEstimateLabNumber(label);
-                                setIsCustomEstimateLabNumber(false);
-                              }
-                            }}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </>
-                  )}
-                  <input
-                    type="text"
-                    className={`input lab-popup-input-small ${isCustomEstimateLabNumber ? 'lab-popup-input-small--active' : ''}`}
-                    placeholder="..."
-                    value={isCustomEstimateLabNumber ? estimateLabNumber : ''}
-                    onChange={(e) => { setEstimateLabNumber(e.target.value); setIsCustomEstimateLabNumber(true); }}
-                  />
-                </div>
-              </div>
-              <div className="time-estimate-lab-time">
-                <label className="lab-popup-label">LAB TIME (MIN)</label>
-                <input
-                  type="number"
-                  className="input lab-popup-input-small"
-                  value={estimateLabTime}
-                  onChange={(e) => setEstimateLabTime(e.target.value)}
-                  min="1"
-                  max="180"
-                />
-              </div>
-              <div className="lab-popup-preview">
-                <label className="lab-popup-label">PREVIEW</label>
-                <div className="lab-popup-preview-text">
-                  {calculateReturnTime().message}
-                </div>
+                <button
+                  className="btn btn--small btn--danger"
+                  onClick={() => setShowTimeEstimatePopup(false)}
+                >
+                  ✕
+                </button>
               </div>
             </div>
+            <div className="lab-popup-content">
+              {isCustomTimerMode ? (
+                <>
+                  <div className="time-estimate-lab-time">
+                    <label className="lab-popup-label">MINUTES</label>
+                    <input
+                      type="number"
+                      className="input lab-popup-input-small"
+                      value={customTimerMinutes}
+                      onChange={(e) => setCustomTimerMinutes(e.target.value)}
+                      min="1"
+                      max="180"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="time-estimate-lab-time">
+                    <label className="lab-popup-label">MESSAGE (OPTIONAL)</label>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="e.g. Lunch Break"
+                      value={customTimerMessage}
+                      onChange={(e) => setCustomTimerMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleOpenCustomTimer();
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="time-estimate-buttons-row">
+                    <div className="lab-buttons-row">
+                      {breakScheduledTimes.map((st) => (
+                        <button
+                          key={st.id}
+                          className={`btn btn--small lab-btn ${estimateBreakId === st.id ? 'lab-btn--active' : ''}`}
+                          onClick={() => setEstimateBreakId(estimateBreakId === st.id ? '' : st.id)}
+                        >
+                          {st.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="time-estimate-separator"></div>
+                    <div className="lab-buttons-row">
+                      {currentDay?.dayNumber && currentDay?.labCount && currentDay.labCount > 0 && (
+                        <>
+                          {Array.from({ length: currentDay.labCount }, (_, i) => {
+                            const label = `${currentDay.dayNumber}.${i + 1}`;
+                            return (
+                              <button
+                                key={label}
+                                className={`btn btn--small lab-btn ${estimateLabNumber === label && !isCustomEstimateLabNumber ? 'lab-btn--active' : ''}`}
+                                onClick={() => {
+                                  if (estimateLabNumber === label && !isCustomEstimateLabNumber) {
+                                    setEstimateLabNumber('');
+                                  } else {
+                                    setEstimateLabNumber(label);
+                                    setIsCustomEstimateLabNumber(false);
+                                  }
+                                }}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </>
+                      )}
+                      <input
+                        type="text"
+                        className={`input lab-popup-input-small ${isCustomEstimateLabNumber ? 'lab-popup-input-small--active' : ''}`}
+                        placeholder="..."
+                        value={isCustomEstimateLabNumber ? estimateLabNumber : ''}
+                        onChange={(e) => { setEstimateLabNumber(e.target.value); setIsCustomEstimateLabNumber(true); }}
+                      />
+                    </div>
+                  </div>
+                  <div className="time-estimate-lab-time">
+                    <label className="lab-popup-label">LAB TIME (MIN)</label>
+                    <input
+                      type="number"
+                      className="input lab-popup-input-small"
+                      value={estimateLabTime}
+                      onChange={(e) => setEstimateLabTime(e.target.value)}
+                      min="1"
+                      max="180"
+                    />
+                  </div>
+                  <div className="lab-popup-preview">
+                    <label className="lab-popup-label">PREVIEW</label>
+                    <div className="lab-popup-preview-text">
+                      {calculateReturnTime().message}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <div className="lab-popup-actions">
-              <button
-                className="btn btn--accent btn--full-width"
-                onClick={handleSendAndOpenTimer}
-                title="Send estimate, press Enter, and open timer"
-              >
-                SEND & OPEN TIMER
-              </button>
-              <button
-                className="btn btn--primary btn--half-width"
-                onClick={handleOpenCountdownTimer}
-                title="Open a shareable countdown timer window"
-              >
-                OPEN TIMER
-              </button>
-              <button
-                className="btn btn--success btn--half-width"
-                onClick={handleSendTimeEstimate}
-                title="Send estimate to target window"
-              >
-                SEND ESTIMATE
-              </button>
+              {isCustomTimerMode ? (
+                <button
+                  className="btn btn--primary btn--full-width"
+                  onClick={handleOpenCustomTimer}
+                >
+                  OPEN TIMER
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="btn btn--accent btn--full-width"
+                    onClick={handleSendAndOpenTimer}
+                    title="Send estimate, press Enter, and open timer"
+                  >
+                    SEND & OPEN TIMER
+                  </button>
+                  <button
+                    className="btn btn--primary btn--half-width"
+                    onClick={handleOpenCountdownTimer}
+                    title="Open a shareable countdown timer window"
+                  >
+                    OPEN TIMER
+                  </button>
+                  <button
+                    className="btn btn--success btn--half-width"
+                    onClick={handleSendTimeEstimate}
+                    title="Send estimate to target window"
+                  >
+                    SEND ESTIMATE
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

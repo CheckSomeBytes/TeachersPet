@@ -14,7 +14,7 @@ interface SectionProps {
 }
 
 function SectionComponent({ dayId, section }: SectionProps) {
-  const { updateSection, deleteSection, toggleSectionCollapse, isEditMode, selectedSectionIds, toggleSectionSelection, moveItemToSection, resetSectionPolls, assignLabToSection, unassignLabFromSection, updateLabNotes, addNotification, getCurrentProfile } = useAppStore();
+  const { updateSection, deleteSection, toggleSectionCollapse, isEditMode, selectedSectionIds, toggleSectionSelection, moveItemToSection, resetSectionPolls, assignLabToSection, unassignLabFromSection, addNotification, getCurrentProfile, setOpenLabNotesLabNumber } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(section.name);
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -23,9 +23,6 @@ function SectionComponent({ dayId, section }: SectionProps) {
   const [showPolls, setShowPolls] = useState(false);
   const [isAddingPoll, setIsAddingPoll] = useState(false);
   const [isSectionDragging, setIsSectionDragging] = useState(false);
-  const [showLabNotes, setShowLabNotes] = useState(false);
-  const [labNotesText, setLabNotesText] = useState(section.labNotes || '');
-
   const currentProfile = getCurrentProfile();
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -82,36 +79,6 @@ function SectionComponent({ dayId, section }: SectionProps) {
       const data = JSON.parse(e.dataTransfer.getData('application/json'));
       moveItemToSection(data.itemId, data.sourceDayId, data.sourceSectionId, dayId, section.id);
     } catch {}
-  };
-
-  const handleLabPoll = async () => {
-    if (!section.assignedLab) return;
-
-    const { windowTarget, labPollTemplate } = currentProfile.settings;
-
-    if (!windowTarget.pattern) {
-      addNotification('No window pattern configured. Go to Settings.', 'error');
-      return;
-    }
-
-    const pollText = (labPollTemplate || '').replace(/<LAB_NUMBER>/g, section.assignedLab);
-
-    const result = await window.electronAPI.focusAndPaste(
-      windowTarget.pattern,
-      windowTarget.matchMode,
-      pollText
-    );
-
-    if (result.success) {
-      addNotification(`Lab ${section.assignedLab} poll sent!`, 'success');
-    } else {
-      addNotification(result.error || 'Failed to send lab poll', 'error');
-    }
-  };
-
-  const handleOpenLabNotes = () => {
-    setLabNotesText(section.labNotes || '');
-    setShowLabNotes(true);
   };
 
   const handleSectionDragStart = (e: DragEvent<HTMLSpanElement>) => {
@@ -224,8 +191,8 @@ function SectionComponent({ dayId, section }: SectionProps) {
               )}
               {section.assignedLab && (
                 <button
-                  className={`section-lab-badge ${section.labNotes ? 'section-lab-badge--has-notes' : ''}`}
-                  onClick={handleOpenLabNotes}
+                  className={`section-lab-badge ${currentProfile.settings.labNotes?.[section.assignedLab!] ? 'section-lab-badge--has-notes' : ''}`}
+                  onClick={() => setOpenLabNotesLabNumber(section.assignedLab!)}
                   draggable={isEditMode}
                   onDragStart={(e) => {
                     e.dataTransfer.setData('application/lab-assign', JSON.stringify({
@@ -349,59 +316,6 @@ function SectionComponent({ dayId, section }: SectionProps) {
                 </div>
               )
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Lab Notes popup */}
-      {showLabNotes && section.assignedLab && (
-        <div className="section-lab-notes-overlay" onClick={() => setShowLabNotes(false)}>
-          <div className="section-lab-notes-popup" onClick={(e) => e.stopPropagation()}>
-            <div className="section-lab-notes-header">
-              <span className="section-lab-notes-title">Lab {section.assignedLab} Notes</span>
-              <div className="section-lab-notes-header-actions">
-                <button
-                  className="btn btn--small btn--success"
-                  onClick={handleLabPoll}
-                  title="Send lab poll to target window"
-                >
-                  🧪 SEND POLL
-                </button>
-                <button
-                  className="btn btn--small btn--danger"
-                  onClick={() => setShowLabNotes(false)}
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-            <div className="section-lab-notes-content">
-              <textarea
-                className="textarea section-lab-notes-textarea"
-                placeholder="Enter your lab notes here..."
-                value={labNotesText}
-                onChange={(e) => {
-                  setLabNotesText(e.target.value);
-                  updateLabNotes(dayId, section.id, e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Tab') {
-                    e.preventDefault();
-                    const target = e.target as HTMLTextAreaElement;
-                    const start = target.selectionStart;
-                    const end = target.selectionEnd;
-                    const newValue = labNotesText.substring(0, start) + '\t' + labNotesText.substring(end);
-                    setLabNotesText(newValue);
-                    updateLabNotes(dayId, section.id, newValue);
-                    // Set cursor position after the tab
-                    setTimeout(() => {
-                      target.selectionStart = target.selectionEnd = start + 1;
-                    }, 0);
-                  }
-                }}
-                autoFocus
-              />
-            </div>
           </div>
         </div>
       )}

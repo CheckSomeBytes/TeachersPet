@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell, clipboard, dialog, Menu, net } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import { join } from 'path';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import {
@@ -372,7 +373,7 @@ function setupIPC(): void {
   ipcMain.handle(IPC_CHANNELS.EXPORT_CONFIG, async () => {
     const result = await dialog.showSaveDialog({
       title: 'Export Configuration',
-      defaultPath: 'sans-notes-export.json',
+      defaultPath: 'teacherspet-export.json',
       filters: [{ name: 'JSON', extensions: ['json'] }],
     });
 
@@ -486,6 +487,59 @@ function setupIPC(): void {
 
   ipcMain.handle(IPC_CHANNELS.QUIT_APP, () => {
     app.quit();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.MINIMIZE_APP, () => {
+    mainWindow?.minimize();
+  });
+
+  // Auto-updater handlers
+  ipcMain.handle(IPC_CHANNELS.CHECK_FOR_UPDATES, async () => {
+    try {
+      if (app.isPackaged) {
+        const result = await autoUpdater.checkForUpdates();
+        return {
+          updateAvailable: result && result.updateInfo.version !== app.getVersion(),
+          currentVersion: app.getVersion(),
+          latestVersion: result?.updateInfo.version,
+        };
+      } else {
+        return {
+          updateAvailable: false,
+          currentVersion: app.getVersion(),
+          latestVersion: app.getVersion(),
+          isDev: true,
+        };
+      }
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+      return { error: String(error) };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.DOWNLOAD_UPDATE, async () => {
+    try {
+      if (app.isPackaged) {
+        await autoUpdater.downloadUpdate();
+        return { success: true };
+      }
+      return { success: false, error: 'Not in production mode' };
+    } catch (error) {
+      console.error('Error downloading update:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.INSTALL_UPDATE, () => {
+    if (app.isPackaged) {
+      autoUpdater.quitAndInstall();
+      return { success: true };
+    }
+    return { success: false, error: 'Not in production mode' };
+  });
+
+  ipcMain.handle(IPC_CHANNELS.GET_APP_VERSION, () => {
+    return app.getVersion();
   });
 }
 
@@ -767,10 +821,57 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
   }
 }
 
+// Configure auto-updater
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = false;
+
+// Auto-updater event handlers
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available:', info.version);
+  mainWindow?.webContents.send('update-available', {
+    version: info.version,
+    releaseNotes: info.releaseNotes,
+  });
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('Update not available. Current version:', info.version);
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('Auto-updater error:', err);
+  mainWindow?.webContents.send('update-error', String(err));
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  console.log(`Download progress: ${progressObj.percent.toFixed(2)}%`);
+  mainWindow?.webContents.send('download-progress', {
+    percent: progressObj.percent,
+    transferred: progressObj.transferred,
+    total: progressObj.total,
+  });
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded:', info.version);
+  mainWindow?.webContents.send('update-downloaded', {
+    version: info.version,
+  });
+});
+
 // App lifecycle
 app.whenReady().then(() => {
   setupIPC();
   createWindow();
+
+  // Check for updates on startup (only in production)
+  if (app.isPackaged) {
+    setTimeout(() => {
+      autoUpdater.checkForUpdates().catch((err) => {
+        console.error('Error checking for updates on startup:', err);
+      });
+    }, 3000);
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

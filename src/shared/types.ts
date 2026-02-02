@@ -1,4 +1,4 @@
-// Core data types for SANS Notes
+// Core data types for TeachersPet
 
 export interface Profile {
   id: string;
@@ -38,6 +38,7 @@ export interface Settings {
   breakAlertMinutes: number; // Minutes before break to trigger alert theme (default 5)
   lastLaunchDate?: string; // ISO date string of last launch
   timerFontFamily?: string; // Font family for countdown timer (falls back to theme.fontFamily)
+  labNotes?: Record<string, string>; // Lab notes keyed by lab number (e.g., "4.1")
 }
 
 // Font size presets (in pixels) - separate presets for retro (pixel) and modern fonts
@@ -96,7 +97,6 @@ export interface Section {
   items: SectionItem[];
   polls: Poll[];
   assignedLab?: string; // Lab number assigned to this section (e.g., "4.1")
-  labNotes?: string; // Notes for the assigned lab
 }
 
 export type SectionItem = Link | Note;
@@ -160,6 +160,13 @@ export const IPC_CHANNELS = {
   // App
   GET_APP_PATH: 'app:get-path',
   QUIT_APP: 'app:quit',
+  MINIMIZE_APP: 'app:minimize',
+
+  // Auto-updater
+  CHECK_FOR_UPDATES: 'app:check-for-updates',
+  DOWNLOAD_UPDATE: 'app:download-update',
+  INSTALL_UPDATE: 'app:install-update',
+  GET_APP_VERSION: 'app:get-version',
 } as const;
 
 // Default theme - 8-bit style

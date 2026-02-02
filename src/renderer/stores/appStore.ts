@@ -58,7 +58,7 @@ interface AppState {
   expandAllSections: (dayId: string) => void;
   assignLabToSection: (dayId: string, sectionId: string, labNumber: string) => void;
   unassignLabFromSection: (dayId: string, sectionId: string) => void;
-  updateLabNotes: (dayId: string, sectionId: string, notes: string) => void;
+  updateLabNotes: (labNumber: string, notes: string) => void;
 
   // Day navigation
   goToPreviousDay: () => void;
@@ -119,6 +119,8 @@ interface AppState {
   getCurrentProfile: () => Profile;
   settingsTab: string;
   setSettingsTab: (tab: string) => void;
+  openLabNotesLabNumber: string | null;
+  setOpenLabNotesLabNumber: (labNumber: string | null) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -135,6 +137,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   showValidationModal: false,
   _configLoadStarted: false,
   settingsTab: 'profiles',
+  openLabNotesLabNumber: null,
 
   loadConfig: async () => {
     if (get()._configLoadStarted) return; // Prevent duplicate calls (e.g., React StrictMode)
@@ -171,6 +174,21 @@ export const useAppStore = create<AppState>((set, get) => ({
             },
           })),
         };
+      }
+
+      // Migrate section-level labNotes to profile-level settings.labNotes
+      for (const profile of config.profiles) {
+        for (const day of profile.days) {
+          for (const section of day.sections) {
+            if ((section as any).labNotes && section.assignedLab) {
+              if (!profile.settings.labNotes) profile.settings.labNotes = {};
+              if (!profile.settings.labNotes[section.assignedLab]) {
+                profile.settings.labNotes[section.assignedLab] = (section as any).labNotes;
+              }
+            }
+            delete (section as any).labNotes;
+          }
+        }
       }
 
       const currentProfile = config.profiles.find(p => p.id === config.currentProfileId) || config.profiles[0];
@@ -560,7 +578,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     get().saveConfig();
   },
 
-  updateLabNotes: (dayId, sectionId, notes) => {
+  updateLabNotes: (labNumber, notes) => {
     set((state) => ({
       config: {
         ...state.config,
@@ -568,18 +586,13 @@ export const useAppStore = create<AppState>((set, get) => ({
           p.id === state.config.currentProfileId
             ? {
                 ...p,
-                days: p.days.map((day) =>
-                  day.id === dayId
-                    ? {
-                        ...day,
-                        sections: day.sections.map((section) =>
-                          section.id === sectionId
-                            ? { ...section, labNotes: notes }
-                            : section
-                        ),
-                      }
-                    : day
-                ),
+                settings: {
+                  ...p.settings,
+                  labNotes: {
+                    ...(p.settings.labNotes || {}),
+                    [labNumber]: notes,
+                  },
+                },
               }
             : p
         ),
@@ -1576,5 +1589,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   openSettingsToTab: (tab) => {
     set({ isSettingsOpen: true, settingsTab: tab });
+  },
+
+  setOpenLabNotesLabNumber: (labNumber) => {
+    set({ openLabNotesLabNumber: labNumber });
   },
 }));

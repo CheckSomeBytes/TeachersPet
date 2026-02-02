@@ -3,7 +3,7 @@ import { useAppStore } from '../../stores/appStore';
 import { DEFAULT_THEME, Theme, ThemeColors, PRESET_THEMES, TIMEZONES, ScheduledTime, FontSize } from '../../../shared/types';
 import './SettingsModal.css';
 
-type SettingsTab = 'profiles' | 'days' | 'window' | 'links' | 'theme' | 'schedule' | 'data';
+type SettingsTab = 'profiles' | 'days' | 'window' | 'links' | 'theme' | 'schedule' | 'data' | 'updates';
 
 interface WindowInfo {
   title: string;
@@ -75,6 +75,19 @@ function SettingsModal() {
   const [duplicatingProfileId, setDuplicatingProfileId] = useState<string | null>(null);
   const [duplicateProfileName, setDuplicateProfileName] = useState('');
 
+  // Updates state
+  const [appVersion, setAppVersion] = useState('');
+  const [isCheckingForUpdates, setIsCheckingForUpdates] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<{
+    updateAvailable: boolean;
+    currentVersion: string;
+    latestVersion?: string;
+    isDev?: boolean;
+  } | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isUpdateReady, setIsUpdateReady] = useState(false);
+
   // Convert 12-hour to 24-hour format (HH:MM)
   const to24Hour = (hour: string, minute: string, amPm: 'AM' | 'PM'): string => {
     let h = parseInt(hour);
@@ -107,6 +120,48 @@ function SettingsModal() {
       loadWindowList();
     }
   }, [isSettingsOpen, activeTab]);
+
+  // Get app version and set up update listeners
+  useEffect(() => {
+    const loadVersion = async () => {
+      const version = await window.electronAPI.getAppVersion();
+      setAppVersion(version);
+    };
+    loadVersion();
+
+    // Set up update event listeners
+    const removeUpdateAvailable = window.electronAPI.onUpdateAvailable((info) => {
+      setUpdateInfo({
+        updateAvailable: true,
+        currentVersion: appVersion,
+        latestVersion: info.version,
+      });
+      addNotification(`Update ${info.version} available!`, 'info');
+    });
+
+    const removeDownloadProgress = window.electronAPI.onDownloadProgress((progress) => {
+      setDownloadProgress(progress.percent);
+    });
+
+    const removeUpdateDownloaded = window.electronAPI.onUpdateDownloaded((info) => {
+      setIsDownloading(false);
+      setIsUpdateReady(true);
+      addNotification(`Update ${info.version} downloaded!`, 'success');
+    });
+
+    const removeUpdateError = window.electronAPI.onUpdateError((error) => {
+      setIsCheckingForUpdates(false);
+      setIsDownloading(false);
+      addNotification(`Update error: ${error}`, 'error');
+    });
+
+    return () => {
+      removeUpdateAvailable();
+      removeDownloadProgress();
+      removeUpdateDownloaded();
+      removeUpdateError();
+    };
+  }, [appVersion]);
 
   const loadWindowList = async () => {
     setIsLoadingWindows(true);
@@ -175,6 +230,52 @@ function SettingsModal() {
       setTimeout(() => {
         useAppStore.getState().loadConfig();
       }, 500);
+    }
+  };
+
+  const handleCheckForUpdates = async () => {
+    setIsCheckingForUpdates(true);
+    try {
+      const result = await window.electronAPI.checkForUpdates();
+      setUpdateInfo(result);
+
+      if (result.isDev) {
+        addNotification('Running in dev mode', 'info');
+      } else if (result.error) {
+        addNotification(`Update check failed: ${result.error}`, 'error');
+      } else if (result.updateAvailable) {
+        addNotification(`Update ${result.latestVersion} available!`, 'success');
+      } else {
+        addNotification('You are on the latest version!', 'success');
+      }
+    } catch (error) {
+      addNotification('Failed to check for updates', 'error');
+    }
+    setIsCheckingForUpdates(false);
+  };
+
+  const handleDownloadUpdate = async () => {
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    try {
+      const result = await window.electronAPI.downloadUpdate();
+      if (!result.success) {
+        addNotification(`Download failed: ${result.error}`, 'error');
+        setIsDownloading(false);
+      }
+      // Download completion is handled by the event listener
+    } catch (error) {
+      addNotification('Failed to download update', 'error');
+      setIsDownloading(false);
+    }
+  };
+
+  const handleInstallUpdate = async () => {
+    try {
+      await window.electronAPI.installUpdate();
+      // App will quit and install
+    } catch (error) {
+      addNotification('Failed to install update', 'error');
     }
   };
 
@@ -258,6 +359,12 @@ function SettingsModal() {
             onClick={() => handleTabChange('data')}
           >
             DATA
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'updates' ? 'settings-tab--active' : ''}`}
+            onClick={() => handleTabChange('updates')}
+          >
+            UPDATES
           </button>
         </div>
 
@@ -1180,6 +1287,105 @@ function SettingsModal() {
               <p className="settings-help">
                 Use <code>&lt;LAB_NUMBER&gt;</code> as the placeholder for the lab number.
                 This template is used when sending lab polls from the header button.
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'updates' && (
+            <div className="settings-section">
+              <h3 className="settings-section-title">APP VERSION</h3>
+
+              <div className="settings-field">
+                <p className="settings-help">
+                  Current Version: <strong>{appVersion || 'Loading...'}</strong>
+                </p>
+              </div>
+
+              <h3 className="settings-section-title">CHECK FOR UPDATES</h3>
+
+              <div className="settings-actions">
+                <button
+                  className="btn"
+                  onClick={handleCheckForUpdates}
+                  disabled={isCheckingForUpdates}
+                >
+                  {isCheckingForUpdates ? 'CHECKING...' : 'CHECK FOR UPDATES'}
+                </button>
+              </div>
+
+              {updateInfo && !updateInfo.isDev && (
+                <>
+                  {updateInfo.updateAvailable ? (
+                    <div className="settings-update-info">
+                      <p className="settings-help settings-update-available">
+                        New version available: <strong>{updateInfo.latestVersion}</strong>
+                      </p>
+
+                      {!isUpdateReady && !isDownloading && (
+                        <div className="settings-actions">
+                          <button
+                            className="btn btn--success"
+                            onClick={handleDownloadUpdate}
+                          >
+                            DOWNLOAD UPDATE
+                          </button>
+                        </div>
+                      )}
+
+                      {isDownloading && (
+                        <div className="settings-download-progress">
+                          <p className="settings-help">
+                            Downloading: {downloadProgress.toFixed(1)}%
+                          </p>
+                          <div className="settings-progress-bar">
+                            <div
+                              className="settings-progress-bar-fill"
+                              style={{ width: `${downloadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {isUpdateReady && (
+                        <>
+                          <p className="settings-help settings-update-ready">
+                            Update downloaded and ready to install!
+                          </p>
+                          <div className="settings-actions">
+                            <button
+                              className="btn btn--success"
+                              onClick={handleInstallUpdate}
+                            >
+                              RESTART & INSTALL
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    updateInfo.currentVersion && (
+                      <p className="settings-help settings-update-current">
+                        You are running the latest version!
+                      </p>
+                    )
+                  )}
+                </>
+              )}
+
+              {updateInfo?.isDev && (
+                <p className="settings-help">
+                  Auto-update is only available in production builds. You are running in development mode.
+                </p>
+              )}
+
+              <h3 className="settings-section-title">ABOUT AUTO-UPDATES</h3>
+              <p className="settings-help">
+                TeachersPet automatically checks for updates on startup. Updates are published to GitHub Releases
+                and include bug fixes, new features, and improvements.
+              </p>
+              <p className="settings-help">
+                When an update is available, you can download and install it from this page.
+                The app will restart automatically to complete the installation.
               </p>
             </div>
           )}
