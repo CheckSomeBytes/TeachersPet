@@ -6,7 +6,8 @@
       "WebFetch(domain:coolors.co)",
       "Bash(npx tsc:*)",
       "Bash(tree:*)",
-      "mcp__playwright__browser_navigate"
+      "mcp__playwright__browser_navigate",
+      "Bash(gh run view:*)"
     ]
   }
 }
