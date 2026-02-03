@@ -3,7 +3,7 @@ import { useAppStore } from '../../stores/appStore';
 import { DEFAULT_THEME, Theme, ThemeColors, PRESET_THEMES, TIMEZONES, ScheduledTime, FontSize, BackupMetadata } from '../../../shared/types';
 import './SettingsModal.css';
 
-type SettingsTab = 'general' | 'profiles' | 'days' | 'theme' | 'data' | 'updates';
+type SettingsTab = 'general' | 'profiles' | 'days' | 'theme' | 'system';
 
 interface WindowInfo {
   title: string;
@@ -194,7 +194,7 @@ function SettingsModal() {
 
   // Load backups when data tab is activated
   useEffect(() => {
-    if (isSettingsOpen && activeTab === 'data') {
+    if (isSettingsOpen && activeTab === 'system') {
       loadBackupList();
     }
   }, [isSettingsOpen, activeTab]);
@@ -204,7 +204,7 @@ function SettingsModal() {
     const removeBackupCreated = window.electronAPI.onBackupCreated((metadata) => {
       addNotification('Auto-backup created', 'success');
       // Refresh backup list if we're on the data tab
-      if (isSettingsOpen && activeTab === 'data') {
+      if (isSettingsOpen && activeTab === 'system') {
         loadBackupList();
       }
     });
@@ -575,16 +575,10 @@ function SettingsModal() {
             THEME
           </button>
           <button
-            className={`settings-tab ${activeTab === 'data' ? 'settings-tab--active' : ''}`}
-            onClick={() => handleTabChange('data')}
+            className={`settings-tab ${activeTab === 'system' ? 'settings-tab--active' : ''}`}
+            onClick={() => handleTabChange('system')}
           >
-            DATA
-          </button>
-          <button
-            className={`settings-tab ${activeTab === 'updates' ? 'settings-tab--active' : ''}`}
-            onClick={() => handleTabChange('updates')}
-          >
-            UPDATES
+            SYSTEM
           </button>
         </div>
 
@@ -1269,6 +1263,46 @@ function SettingsModal() {
                   <span>Press Enter after pasting URLs and Notes</span>
                 </label>
               </div>
+
+              <h3 className="settings-section-title">POLLS</h3>
+
+              <div className="settings-actions">
+                <button
+                  className="btn btn--secondary"
+                  onClick={() => {
+                    if (confirm('Reset all polls to "new" status?')) {
+                      resetAllPolls();
+                      addNotification('All polls reset', 'success');
+                    }
+                  }}
+                >
+                  RESET ALL POLLS
+                </button>
+              </div>
+
+              <p className="settings-help">
+                Reset all polls across all sections to "new" status, removing the "sent" mark.
+              </p>
+
+              <h3 className="settings-section-title">LAB POLL TEMPLATE</h3>
+
+              <div className="settings-field">
+                <label className="settings-label">TEMPLATE</label>
+                <textarea
+                  className="textarea settings-lab-template"
+                  value={settings.labPollTemplate || ''}
+                  onChange={(e) =>
+                    updateSettings({ labPollTemplate: e.target.value })
+                  }
+                  placeholder="Enter lab poll template..."
+                  rows={4}
+                />
+              </div>
+
+              <p className="settings-help">
+                Use <code>&lt;LAB_NUMBER&gt;</code> as the placeholder for the lab number.
+                This template is used when sending lab polls from the header button.
+              </p>
             </div>
           )}
 
@@ -1664,22 +1698,96 @@ function SettingsModal() {
             </div>
           )}
 
-          {activeTab === 'data' && (
+          {activeTab === 'system' && (
             <div className="settings-section">
-              <h3 className="settings-section-title">IMPORT / EXPORT</h3>
+              <h3 className="settings-section-title">APP VERSION</h3>
+
+              <div className="settings-field">
+                <p className="settings-help">
+                  Current Version: <strong>{appVersion || 'Loading...'}</strong>
+                </p>
+              </div>
+
+              <h3 className="settings-section-title">CHECK FOR UPDATES</h3>
 
               <div className="settings-actions">
-                <button className="btn" onClick={handleExport}>
-                  EXPORT CONFIG
-                </button>
-                <button className="btn btn--secondary" onClick={handleImport}>
-                  IMPORT CONFIG
+                <button
+                  className="btn"
+                  onClick={handleCheckForUpdates}
+                  disabled={isCheckingForUpdates}
+                >
+                  {isCheckingForUpdates ? 'CHECKING...' : 'CHECK FOR UPDATES'}
                 </button>
               </div>
 
+              {updateInfo && !updateInfo.isDev && (
+                <>
+                  {updateInfo.updateAvailable ? (
+                    <div className="settings-update-info">
+                      <p className="settings-help settings-update-available">
+                        New version available: <strong>{updateInfo.latestVersion}</strong>
+                      </p>
+
+                      {!isUpdateReady && !isDownloading && (
+                        <div className="settings-actions">
+                          <button
+                            className="btn btn--success"
+                            onClick={handleDownloadUpdate}
+                          >
+                            DOWNLOAD UPDATE
+                          </button>
+                        </div>
+                      )}
+
+                      {isDownloading && (
+                        <div className="settings-download-progress">
+                          <p className="settings-help">
+                            Downloading: {downloadProgress.toFixed(1)}%
+                          </p>
+                          <div className="settings-progress-bar">
+                            <div
+                              className="settings-progress-bar-fill"
+                              style={{ width: `${downloadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {isUpdateReady && (
+                        <>
+                          <p className="settings-help settings-update-ready">
+                            Update downloaded and ready to install!
+                          </p>
+                          <div className="settings-actions">
+                            <button
+                              className="btn btn--success"
+                              onClick={handleInstallUpdate}
+                            >
+                              RESTART & INSTALL
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    updateInfo.currentVersion && (
+                      <p className="settings-help settings-update-current">
+                        You are running the latest version!
+                      </p>
+                    )
+                  )}
+                </>
+              )}
+
+              {updateInfo?.isDev && (
+                <p className="settings-help">
+                  Auto-update is only available in production builds. You are running in development mode.
+                </p>
+              )}
+
               <p className="settings-help">
-                Export your days, sections, links, and settings to a JSON file
-                for backup or sharing.
+                TeachersPet automatically checks for updates on startup. Updates are published to GitHub Releases
+                and include bug fixes, new features, and improvements.
               </p>
 
               <h3 className="settings-section-title">AUTO-BACKUP</h3>
@@ -1831,143 +1939,19 @@ function SettingsModal() {
                 </>
               )}
 
-              <h3 className="settings-section-title">POLLS</h3>
+              <h3 className="settings-section-title">IMPORT / EXPORT</h3>
 
               <div className="settings-actions">
-                <button
-                  className="btn btn--secondary"
-                  onClick={() => {
-                    if (confirm('Reset all polls to "new" status?')) {
-                      resetAllPolls();
-                      addNotification('All polls reset', 'success');
-                    }
-                  }}
-                >
-                  RESET ALL POLLS
+                <button className="btn" onClick={handleExport}>
+                  EXPORT CONFIG
+                </button>
+                <button className="btn btn--secondary" onClick={handleImport}>
+                  IMPORT CONFIG
                 </button>
               </div>
 
               <p className="settings-help">
-                Reset all polls across all sections to "new" status, removing the "sent" mark.
-              </p>
-
-              <h3 className="settings-section-title">LAB POLL TEMPLATE</h3>
-
-              <div className="settings-field">
-                <label className="settings-label">TEMPLATE</label>
-                <textarea
-                  className="textarea settings-lab-template"
-                  value={settings.labPollTemplate || ''}
-                  onChange={(e) =>
-                    updateSettings({ labPollTemplate: e.target.value })
-                  }
-                  placeholder="Enter lab poll template..."
-                  rows={4}
-                />
-              </div>
-
-              <p className="settings-help">
-                Use <code>&lt;LAB_NUMBER&gt;</code> as the placeholder for the lab number.
-                This template is used when sending lab polls from the header button.
-              </p>
-            </div>
-          )}
-
-          {activeTab === 'updates' && (
-            <div className="settings-section">
-              <h3 className="settings-section-title">APP VERSION</h3>
-
-              <div className="settings-field">
-                <p className="settings-help">
-                  Current Version: <strong>{appVersion || 'Loading...'}</strong>
-                </p>
-              </div>
-
-              <h3 className="settings-section-title">CHECK FOR UPDATES</h3>
-
-              <div className="settings-actions">
-                <button
-                  className="btn"
-                  onClick={handleCheckForUpdates}
-                  disabled={isCheckingForUpdates}
-                >
-                  {isCheckingForUpdates ? 'CHECKING...' : 'CHECK FOR UPDATES'}
-                </button>
-              </div>
-
-              {updateInfo && !updateInfo.isDev && (
-                <>
-                  {updateInfo.updateAvailable ? (
-                    <div className="settings-update-info">
-                      <p className="settings-help settings-update-available">
-                        New version available: <strong>{updateInfo.latestVersion}</strong>
-                      </p>
-
-                      {!isUpdateReady && !isDownloading && (
-                        <div className="settings-actions">
-                          <button
-                            className="btn btn--success"
-                            onClick={handleDownloadUpdate}
-                          >
-                            DOWNLOAD UPDATE
-                          </button>
-                        </div>
-                      )}
-
-                      {isDownloading && (
-                        <div className="settings-download-progress">
-                          <p className="settings-help">
-                            Downloading: {downloadProgress.toFixed(1)}%
-                          </p>
-                          <div className="settings-progress-bar">
-                            <div
-                              className="settings-progress-bar-fill"
-                              style={{ width: `${downloadProgress}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {isUpdateReady && (
-                        <>
-                          <p className="settings-help settings-update-ready">
-                            Update downloaded and ready to install!
-                          </p>
-                          <div className="settings-actions">
-                            <button
-                              className="btn btn--success"
-                              onClick={handleInstallUpdate}
-                            >
-                              RESTART & INSTALL
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    updateInfo.currentVersion && (
-                      <p className="settings-help settings-update-current">
-                        You are running the latest version!
-                      </p>
-                    )
-                  )}
-                </>
-              )}
-
-              {updateInfo?.isDev && (
-                <p className="settings-help">
-                  Auto-update is only available in production builds. You are running in development mode.
-                </p>
-              )}
-
-              <h3 className="settings-section-title">ABOUT AUTO-UPDATES</h3>
-              <p className="settings-help">
-                TeachersPet automatically checks for updates on startup. Updates are published to GitHub Releases
-                and include bug fixes, new features, and improvements.
-              </p>
-              <p className="settings-help">
-                When an update is available, you can download and install it from this page.
-                The app will restart automatically to complete the installation.
+                Export your days, sections, links, and settings to a JSON file for backup or sharing.
               </p>
             </div>
           )}
