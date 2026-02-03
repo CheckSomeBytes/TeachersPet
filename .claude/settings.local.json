@@ -13,10 +13,39 @@
       "Bash(npm run dev)",
       "Bash(powershell -Command \"Get-Process | Where-Object {$_MainWindowTitle -like ''*TeachersPet*'' -or $_ProcessName -like ''*electron*''} | Select-Object ProcessName, MainWindowTitle, Id\")",
       "Bash(powershell -Command \"Get-Process | Where-Object { $_MainWindowTitle -like ''*TeachersPet*'' -or $_ProcessName -like ''*electron*'' } | Select-Object ProcessName, MainWindowTitle, Id\")",
-      "Bash(powershell -ExecutionPolicy Bypass -File:*)"
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)",
+      "Bash(node validate-config.js:*)",
+      "Bash(git checkout -b feature/*)",
+      "Bash(git checkout master)",
+      "Bash(git checkout develop)",
+      "Bash(git merge *)",
+      "Bash(git tag -a *)",
+      "Bash(git push origin *)",
+      "Bash(ls:*)"
     ]
   },
   "enabledMcpjsonServers": [
     "playwright"
-  ]
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/prevent-protected-commits.sh"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-version-tag.sh"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/check-build.sh"
+          }
+        ]
+      }
+    ]
+  }
 }

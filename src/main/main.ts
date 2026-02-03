@@ -497,7 +497,13 @@ function setupIPC(): void {
   ipcMain.handle(IPC_CHANNELS.CHECK_FOR_UPDATES, async () => {
     try {
       if (app.isPackaged) {
+        console.log('[Update] Checking for updates...');
         const result = await autoUpdater.checkForUpdates();
+        console.log('[Update] Check result:', {
+          current: app.getVersion(),
+          latest: result?.updateInfo.version,
+          updateAvailable: result && result.updateInfo.version !== app.getVersion(),
+        });
         return {
           updateAvailable: result && result.updateInfo.version !== app.getVersion(),
           currentVersion: app.getVersion(),
@@ -512,21 +518,26 @@ function setupIPC(): void {
         };
       }
     } catch (error) {
-      console.error('Error checking for updates:', error);
-      return { error: String(error) };
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('[Update] Error checking for updates:', errorMessage);
+      return { error: errorMessage };
     }
   });
 
   ipcMain.handle(IPC_CHANNELS.DOWNLOAD_UPDATE, async () => {
     try {
       if (app.isPackaged) {
-        await autoUpdater.downloadUpdate();
+        console.log('[Update] Starting download...');
+        const result = await autoUpdater.downloadUpdate();
+        console.log('[Update] Download initiated:', result);
         return { success: true };
       }
       return { success: false, error: 'Not in production mode' };
     } catch (error) {
-      console.error('Error downloading update:', error);
-      return { success: false, error: String(error) };
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('[Update] Error downloading update:', errorMessage);
+      console.error('[Update] Full error:', error);
+      return { success: false, error: errorMessage };
     }
   });
 
@@ -831,6 +842,15 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
 // Configure auto-updater
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
+
+// Explicitly set the feed URL for GitHub releases
+if (app.isPackaged) {
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'CheckSomeBytes',
+    repo: 'TeachersPet',
+  });
+}
 
 // Auto-updater event handlers
 autoUpdater.on('update-available', (info) => {
