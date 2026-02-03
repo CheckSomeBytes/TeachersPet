@@ -22,6 +22,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+.claude/
+.mcp.json
 
 # Environment files
 .env

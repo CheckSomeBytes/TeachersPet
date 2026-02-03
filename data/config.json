@@ -7,7 +7,7 @@
       "settings": {
         "windowTarget": {
           "matchMode": "contains",
-          "pattern": "sec541-thompstttt",
+          "pattern": "sec541-thompson-",
           "pressEnterAfterPaste": false
         },
         "checkLinksOnStartup": true,
@@ -30,11 +30,11 @@
         },
         "fontSize": "medium",
         "labPollTemplate": "/poll \"How are we doing on Lab <LAB_NUMBER>? :lab_coat:\" \":exclamation: Having Issues\" \":timer_clock:Need More Time\" \":white_check_mark: Finished the Lab!\" no-preview anonymous",
-        "timezone": "America/New_York",
+        "timezone": "America/Mexico_City",
         "scheduledTimes": [
           {
             "id": "78a8e333-d3f0-4eae-88ad-4eccdbf5b305",
-            "label": "Classs Start",
+            "label": "Class Start",
             "time": "09:00",
             "duration": 15,
             "enabled": true
@@ -89,8 +89,13 @@
           }
         },
         "breakAlertMinutes": 5,
-        "lastLaunchDate": "2026-02-02T07:12:25.675Z",
-        "timerFontFamily": "\"Press Start 2P\", monospace"
+        "lastLaunchDate": "2026-02-03T07:12:11.704Z",
+        "timerFontFamily": "\"Press Start 2P\", monospace",
+        "labNotes": {
+          "4.1": "k01-student-01@sec541ryanic.onmicrosoft.com\n6(1*%vSFhlq2>-jx\n\nk01-student-02@sec541ryanic.onmicrosoft.com\n8Z3u6D4O5u<ih[3B\n\nk01-student-03@sec541ryanic.onmicrosoft.com\nf(lT0dV=pDJRV0sC\n\nk01-student-04@sec541ryanic.onmicrosoft.com\nSyQG0o}yH!oGGE8I\n\nk01-student-05@sec541ryanic.onmicrosoft.com\n1+dm1W@T$%%gPCsI\n\nk01-ondemand@sec541ryanic.onmicrosoft.com\nb41kKI{fhK-M9Z+!",
+          "5.1": "- Grab MycroftDev instance IP \n- Navigate and log in to Cribl portal \n- Create S3 SQS Events\n- Update Cribl Destination Config\n\t- Grab WorkspaceID and Workspace Key from Azure analytics Workspace\n\t- Input info into Cribl Stream Configuration\n- Interact with Website \n\n------------------------------------------------\n\n`http://` and `:19000`",
+          "5.2": "- Create SNS Subscription \n- Build User Agent Baseline\n\t- Launch `uabaseline` lambda function\n\t- Verify usbaseline file is created in S3\n- Build EventBridge Schedule \n\n--------------------------------------------------------------\n\nUse legit email when creating subscription"
+        }
       },
       "days": [
         {
@@ -120,7 +125,8 @@
               "order": 2,
               "isCollapsed": true,
               "items": [],
-              "polls": []
+              "polls": [],
+              "assignedLab": "1.1"
             },
             {
               "id": "168f0c5c-9259-4703-a830-1ccb21b501ae",
@@ -136,10 +142,11 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "Youtube - Evading Logging in the Cloud  Disrupting and Bypassing AWS CloudTrail - Nick Frichette",
-                  "lastChecked": "2026-02-02T05:07:40.675Z"
+                  "lastChecked": "2026-02-03T07:12:12.444Z"
                 }
               ],
-              "polls": []
+              "polls": [],
+              "assignedLab": "1.2"
             },
             {
               "id": "356904f6-c4df-40c9-a19d-d101991e2220",
@@ -148,7 +155,7 @@
               "isCollapsed": true,
               "items": [],
               "polls": [],
-              "assignedLab": "1.4"
+              "assignedLab": "1.3"
             },
             {
               "id": "ad62768d-2171-4f98-823b-e497ff8ea8d0",
@@ -156,11 +163,12 @@
               "order": 5,
               "isCollapsed": true,
               "items": [],
-              "polls": []
+              "polls": [],
+              "assignedLab": "1.4"
             }
           ],
           "dayNumber": 1,
-          "labCount": 5
+          "labCount": 4
         },
         {
           "id": "36788bbc-5c83-4ff9-a312-2065d39d9962",
@@ -204,7 +212,7 @@
                   "title": "GitHub - Yamato-Security/EnableWindowsLogSettings: Documentation and scripts to properly enable Windows event logs.",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:41.797Z"
+                  "lastChecked": "2026-02-03T07:12:13.630Z"
                 },
                 {
                   "type": "link",
@@ -213,7 +221,7 @@
                   "title": "Greater Visibility Through PowerShell Logging | Mandiant | Google Cloud Blog",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:46.078Z"
+                  "lastChecked": "2026-02-03T07:12:14.331Z"
                 },
                 {
                   "type": "link",
@@ -222,7 +230,7 @@
                   "title": "Advanced security auditing FAQ - Windows 10 | Microsoft Learn",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:46.752Z"
+                  "lastChecked": "2026-02-03T07:12:14.923Z"
                 },
                 {
                   "type": "link",
@@ -231,7 +239,7 @@
                   "title": "auditd/audit.rules at master · Neo23x0/auditd · GitHub",
                   "order": 3,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:47.577Z"
+                  "lastChecked": "2026-02-03T07:12:15.778Z"
                 }
               ],
               "polls": []
@@ -250,9 +258,11 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "Slack - Our Journey Migrating to AWS IMDSv2 |  Engineering at Slack",
-                  "lastChecked": "2026-02-02T05:07:48.226Z"
+                  "lastChecked": "2026-02-03T07:12:16.372Z"
                 }
-              ]
+              ],
+              "polls": [],
+              "assignedLab": "2.1"
             },
             {
               "id": "401b7ba3-a70c-4322-935f-4db6dcf843bc",
@@ -260,7 +270,8 @@
               "order": 4,
               "isCollapsed": false,
               "items": [],
-              "polls": []
+              "polls": [],
+              "assignedLab": "2.2"
             },
             {
               "id": "5ecd326b-1df5-4d63-822e-6a0094c0c654",
@@ -275,7 +286,7 @@
                   "title": "Logs and metrics | Docker Docs",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:48.878Z"
+                  "lastChecked": "2026-02-03T07:12:17.030Z"
                 },
                 {
                   "type": "link",
@@ -284,7 +295,7 @@
                   "title": "Kubernetes Components | Kubernetes",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:49.513Z"
+                  "lastChecked": "2026-02-03T07:12:17.745Z"
                 },
                 {
                   "type": "link",
@@ -293,7 +304,7 @@
                   "title": "https://kubernetes.io/images/docs/kubernetes-cluster-architecture.svg",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:50.056Z"
+                  "lastChecked": "2026-02-03T07:12:18.316Z"
                 },
                 {
                   "type": "link",
@@ -302,7 +313,7 @@
                   "title": "Auditing | Kubernetes",
                   "order": 3,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:50.598Z"
+                  "lastChecked": "2026-02-03T07:12:18.922Z"
                 },
                 {
                   "type": "link",
@@ -311,10 +322,11 @@
                   "title": "Pod Security Policies | Kubernetes",
                   "order": 4,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:51.146Z"
+                  "lastChecked": "2026-02-03T07:12:19.497Z"
                 }
               ],
-              "polls": []
+              "polls": [],
+              "assignedLab": "2.3"
             },
             {
               "id": "85fa6247-91f6-4b6a-8714-06105aacaa4a",
@@ -329,7 +341,7 @@
                   "title": "AWS’s Hidden Threat: AMBERSQUID Cloud-Native Cryptojacking Operation | Sysdig",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:51.739Z"
+                  "lastChecked": "2026-02-03T07:12:20.124Z"
                 },
                 {
                   "type": "link",
@@ -338,7 +350,7 @@
                   "title": "Service control policies (SCPs) - AWS Organizations",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:52.412Z"
+                  "lastChecked": "2026-02-03T07:12:20.840Z"
                 },
                 {
                   "type": "link",
@@ -347,10 +359,11 @@
                   "title": "Overview of Azure Policy - Azure Policy | Microsoft Learn",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:53.010Z"
+                  "lastChecked": "2026-02-03T07:12:21.395Z"
                 }
               ],
-              "polls": []
+              "polls": [],
+              "assignedLab": "2.4"
             },
             {
               "id": "e8a8413c-73b0-4195-bc77-38582790dc53",
@@ -358,7 +371,8 @@
               "order": 7,
               "isCollapsed": false,
               "items": [],
-              "polls": []
+              "polls": [],
+              "assignedLab": "2.5"
             }
           ],
           "dayNumber": 2,
@@ -398,7 +412,7 @@
                   "title": "GitHub - CheckSomeBytes/aws-role-call",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:53.998Z"
+                  "lastChecked": "2026-02-03T07:12:22.363Z"
                 },
                 {
                   "type": "link",
@@ -407,7 +421,7 @@
                   "title": "GitHub - fwdcloudsec/known_aws_accounts: List of known AWS accounts",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:07:55.033Z"
+                  "lastChecked": "2026-02-03T07:12:23.328Z"
                 }
               ],
               "polls": [],
@@ -457,11 +471,12 @@
                       "status": "ok"
                     }
                   ],
-                  "lastChecked": "2026-02-02T05:07:58.432Z",
+                  "lastChecked": "2026-02-03T07:12:26.648Z",
                   "customTitle": "Regex Resources"
                 }
               ],
-              "polls": []
+              "polls": [],
+              "assignedLab": "3.3"
             },
             {
               "id": "5e5dd52a-4e23-4e9f-9e44-1b12a3f865c0",
@@ -477,10 +492,11 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "AWS Inspector agentless EC2 vulnerability assessments",
-                  "lastChecked": "2026-02-02T05:07:59.108Z"
+                  "lastChecked": "2026-02-03T07:12:27.375Z"
                 }
               ],
-              "polls": []
+              "polls": [],
+              "assignedLab": "3.4"
             },
             {
               "id": "da756fa7-3ce2-4fb0-869c-e11c805402e8",
@@ -495,7 +511,7 @@
                   "title": "Ecosystem of Insights: Building Operation Dashboards That Enable Teams - YouTube",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:08:00.217Z",
+                  "lastChecked": "2026-02-03T07:12:28.557Z",
                   "customTitle": "Youtube - Ecosystem of Insights"
                 },
                 {
@@ -505,11 +521,12 @@
                   "title": "Bridging the Gap: Improving Rules Effectiveness by Integrating Detection and Response - YouTube",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:08:01.402Z",
+                  "lastChecked": "2026-02-03T07:12:29.675Z",
                   "customTitle": "Youtube - Bridging the Gap: Improving Rules Effectiveness"
                 }
               ],
-              "polls": []
+              "polls": [],
+              "assignedLab": "3.5"
             }
           ],
           "dayNumber": 3,
@@ -533,8 +550,17 @@
               "name": "Microsoft Sentinel",
               "order": 1,
               "isCollapsed": false,
-              "items": [],
-              "polls": []
+              "items": [
+                {
+                  "type": "note",
+                  "id": "f796e97e-9b47-4088-a50f-06a5725a9d50",
+                  "title": "Azure MSSP Account Credentials",
+                  "content": "k01-student-01@sec541ryanic.onmicrosoft.com\n6(1*%vSFhlq2>-jx\n\nk01-student-02@sec541ryanic.onmicrosoft.com\n8Z3u6D4O5u<ih[3B\n\nk01-student-03@sec541ryanic.onmicrosoft.com\nf(lT0dV=pDJRV0sC\n\nk01-student-04@sec541ryanic.onmicrosoft.com\nSyQG0o}yH!oGGE8I\n\nk01-student-05@sec541ryanic.onmicrosoft.com\n1+dm1W@T$%%gPCsI\n\nk01-ondemand@sec541ryanic.onmicrosoft.com\nb41kKI{fhK-M9Z+!",
+                  "order": 0
+                }
+              ],
+              "polls": [],
+              "assignedLab": "4.1"
             },
             {
               "id": "a9efd2ee-6334-4b5d-93a2-a9e1c6f6f454",
@@ -549,7 +575,7 @@
                   "title": "Detecting suspicious email forwarding rules in Office 365 | Red Canary",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-02T05:08:03.068Z"
+                  "lastChecked": "2026-02-03T07:12:30.381Z"
                 }
               ],
               "polls": [
@@ -606,7 +632,124 @@
           "id": "6af277d0-df3f-46da-8d46-723099d1cdad",
           "name": "Day 5",
           "order": 4,
-          "sections": [],
+          "sections": [
+            {
+              "id": "7a2a5053-3060-432b-a06a-a4b4547166f3",
+              "name": "Data Shipping, Enrichment, and Export",
+              "order": 0,
+              "isCollapsed": false,
+              "items": [
+                {
+                  "type": "link",
+                  "id": "eae4191d-a5cd-4db7-8a6d-4416a849c49b",
+                  "url": "https://raw.githubusercontent.com/CheckSomeBytes/SEC541/main/541.5/data-centralization/azure-field-inconsitencies.png",
+                  "title": "https://raw.githubusercontent.com/CheckSomeBytes/SEC541/main/541.5/data-centralization/azure-field-inconsitencies.png",
+                  "order": 0,
+                  "status": "ok",
+                  "customTitle": "Azure Field Inconsistencies",
+                  "lastChecked": "2026-02-03T07:12:31.021Z"
+                },
+                {
+                  "type": "link",
+                  "id": "0aef086e-71af-4c0e-a330-29f6fe24d284",
+                  "url": "https://raw.githubusercontent.com/CheckSomeBytes/SEC541/main/541.5/data-centralization/field-normalization.png",
+                  "title": "SourceIP Normalization Excercise",
+                  "order": 1,
+                  "status": "unchecked",
+                  "additionalUrls": [
+                    {
+                      "url": "https://raw.githubusercontent.com/CheckSomeBytes/SEC541/main/541.5/data-centralization/field-normalization.png",
+                      "title": "Source IP Question",
+                      "status": "ok"
+                    },
+                    {
+                      "url": "https://raw.githubusercontent.com/CheckSomeBytes/SEC541/main/541.5/data-centralization/source-ip-fields.png",
+                      "title": "SourceIP Fields",
+                      "status": "ok"
+                    }
+                  ],
+                  "lastChecked": "2026-02-03T07:12:32.200Z",
+                  "customTitle": "SourceIP Normalization Excercise"
+                },
+                {
+                  "type": "link",
+                  "id": "b63666d4-f5d1-49f0-9343-781bc60802f1",
+                  "url": "https://www.svix.com/resources/faq/kinesis-vs-eventbridge/",
+                  "title": "Kinesis vs EventBridge | Svix Resources",
+                  "order": 2,
+                  "status": "ok",
+                  "lastChecked": "2026-02-03T07:12:32.994Z"
+                },
+                {
+                  "type": "note",
+                  "id": "1cc23a29-7a83-44c1-bbdd-a4a2d495dc49",
+                  "title": "Hunting Opportunity - Azure - Delete Event Hub",
+                  "content": "Hunting Opportunity - Azure - Delete Event Hub:\n\"MICROSOFT.EVENTHUB/NAMESPACES/EVENTHUBS/DELETE\"",
+                  "order": 3
+                }
+              ],
+              "polls": [
+                {
+                  "id": "caf182ac-60e6-4e86-a9b9-d4fd09b6f439",
+                  "title": "Source IP Field",
+                  "content": "/poll \"What field name should we use for the host sending data?\" \"sourceIP\" \"Source.Ip\" \"source_ip\" \"orig_host\" no-preview anonymous",
+                  "order": 0,
+                  "sent": false
+                }
+              ],
+              "assignedLab": "5.1"
+            },
+            {
+              "id": "ab344c2e-42d4-43bd-85c3-7fd881109441",
+              "name": "Automation Detection and Response Actions",
+              "order": 1,
+              "isCollapsed": false,
+              "items": [],
+              "polls": [],
+              "assignedLab": "5.2"
+            },
+            {
+              "id": "4916c6e7-d844-45a3-93b4-bc5d5c9fe3b9",
+              "name": "Cloud Wars",
+              "order": 2,
+              "isCollapsed": false,
+              "items": [
+                {
+                  "type": "link",
+                  "id": "c82d1a4f-4106-4999-87d4-58409b320826",
+                  "url": "https://www.linkedin.com/in/ryan-m-thompson/",
+                  "title": "https://www.linkedin.com/in/ryan-m-thompson/",
+                  "order": 0,
+                  "status": "broken",
+                  "customTitle": "LinkedIn",
+                  "lastChecked": "2026-02-03T07:12:34.447Z"
+                }
+              ],
+              "polls": [
+                {
+                  "id": "185bb3b4-f01d-4b9a-a6a3-e661eb82cbc5",
+                  "title": "CTF Teams",
+                  "content": "/poll \"Please self assign teams for today's Capstone\" \"Blue\" :large_blue_circle: \"Red\" :red_circle: \"Green\" :large_green_circle: \"Yellow Team\":large_yellow_circle: \"Purple Team\":large_purple_circle: \"Orange Team\":large_orange_circle: no-preview",
+                  "order": 0,
+                  "sent": true
+                },
+                {
+                  "id": "7c144e93-c4a1-4994-ba07-c509824ee7f6",
+                  "title": "Lunch Length",
+                  "content": "/poll \"How long should we take lunch for today?\" \"30 Minutes\" \"45 Minutes\" \"1 Hour\" \"1 Hour 15 Minutes\"  no-preview anonymous",
+                  "order": 1,
+                  "sent": true
+                },
+                {
+                  "id": "392d654d-8483-495a-ab10-ead342410be8",
+                  "title": "Ranges.io Access",
+                  "content": "/poll \"Are you logged into Ranges.io?\"  \"Yes\" \"Need More Time\" \"Having Issues\" no-preview",
+                  "order": 2,
+                  "sent": true
+                }
+              ]
+            }
+          ],
           "dayNumber": 5,
           "labCount": 2
         }

@@ -7,7 +7,16 @@
       "Bash(npx tsc:*)",
       "Bash(tree:*)",
       "mcp__playwright__browser_navigate",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run dev)",
+      "Bash(powershell -Command \"Get-Process | Where-Object {$_MainWindowTitle -like ''*TeachersPet*'' -or $_ProcessName -like ''*electron*''} | Select-Object ProcessName, MainWindowTitle, Id\")",
+      "Bash(powershell -Command \"Get-Process | Where-Object { $_MainWindowTitle -like ''*TeachersPet*'' -or $_ProcessName -like ''*electron*'' } | Select-Object ProcessName, MainWindowTitle, Id\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "playwright"
+  ]
 }
