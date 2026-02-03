@@ -89,12 +89,20 @@
           }
         },
         "breakAlertMinutes": 5,
-        "lastLaunchDate": "2026-02-03T07:12:11.704Z",
+        "lastLaunchDate": "2026-02-03T19:12:17.738Z",
         "timerFontFamily": "\"Press Start 2P\", monospace",
         "labNotes": {
           "4.1": "k01-student-01@sec541ryanic.onmicrosoft.com\n6(1*%vSFhlq2>-jx\n\nk01-student-02@sec541ryanic.onmicrosoft.com\n8Z3u6D4O5u<ih[3B\n\nk01-student-03@sec541ryanic.onmicrosoft.com\nf(lT0dV=pDJRV0sC\n\nk01-student-04@sec541ryanic.onmicrosoft.com\nSyQG0o}yH!oGGE8I\n\nk01-student-05@sec541ryanic.onmicrosoft.com\n1+dm1W@T$%%gPCsI\n\nk01-ondemand@sec541ryanic.onmicrosoft.com\nb41kKI{fhK-M9Z+!",
           "5.1": "- Grab MycroftDev instance IP \n- Navigate and log in to Cribl portal \n- Create S3 SQS Events\n- Update Cribl Destination Config\n\t- Grab WorkspaceID and Workspace Key from Azure analytics Workspace\n\t- Input info into Cribl Stream Configuration\n- Interact with Website \n\n------------------------------------------------\n\n`http://` and `:19000`",
           "5.2": "- Create SNS Subscription \n- Build User Agent Baseline\n\t- Launch `uabaseline` lambda function\n\t- Verify usbaseline file is created in S3\n- Build EventBridge Schedule \n\n--------------------------------------------------------------\n\nUse legit email when creating subscription"
+        },
+        "backupSettings": {
+          "enabled": true,
+          "intervalMinutes": 60,
+          "maxBackups": 10,
+          "backupDirectory": "C:\\Users\\dupin\\OneDrive\\Documents\\teachers-pet-backups",
+          "lastBackupTime": "2026-02-03T23:12:17.076Z",
+          "lastBackupHash": "ffb481ff4bd47ae623ce27d0c743b51e48d25ca380e62a74e1769f22c1c391a4"
         }
       },
       "days": [
@@ -142,7 +150,7 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "Youtube - Evading Logging in the Cloud  Disrupting and Bypassing AWS CloudTrail - Nick Frichette",
-                  "lastChecked": "2026-02-03T07:12:12.444Z"
+                  "lastChecked": "2026-02-03T19:12:18.855Z"
                 }
               ],
               "polls": [],
@@ -212,7 +220,7 @@
                   "title": "GitHub - Yamato-Security/EnableWindowsLogSettings: Documentation and scripts to properly enable Windows event logs.",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:13.630Z"
+                  "lastChecked": "2026-02-03T19:12:20.124Z"
                 },
                 {
                   "type": "link",
@@ -221,7 +229,7 @@
                   "title": "Greater Visibility Through PowerShell Logging | Mandiant | Google Cloud Blog",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:14.331Z"
+                  "lastChecked": "2026-02-03T19:12:24.500Z"
                 },
                 {
                   "type": "link",
@@ -230,7 +238,7 @@
                   "title": "Advanced security auditing FAQ - Windows 10 | Microsoft Learn",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:14.923Z"
+                  "lastChecked": "2026-02-03T19:12:25.188Z"
                 },
                 {
                   "type": "link",
@@ -239,7 +247,7 @@
                   "title": "auditd/audit.rules at master · Neo23x0/auditd · GitHub",
                   "order": 3,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:15.778Z"
+                  "lastChecked": "2026-02-03T19:12:25.997Z"
                 }
               ],
               "polls": []
@@ -258,7 +266,7 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "Slack - Our Journey Migrating to AWS IMDSv2 |  Engineering at Slack",
-                  "lastChecked": "2026-02-03T07:12:16.372Z"
+                  "lastChecked": "2026-02-03T19:12:26.587Z"
                 }
               ],
               "polls": [],
@@ -286,7 +294,7 @@
                   "title": "Logs and metrics | Docker Docs",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:17.030Z"
+                  "lastChecked": "2026-02-03T19:12:27.208Z"
                 },
                 {
                   "type": "link",
@@ -295,7 +303,7 @@
                   "title": "Kubernetes Components | Kubernetes",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:17.745Z"
+                  "lastChecked": "2026-02-03T19:12:27.891Z"
                 },
                 {
                   "type": "link",
@@ -304,7 +312,7 @@
                   "title": "https://kubernetes.io/images/docs/kubernetes-cluster-architecture.svg",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:18.316Z"
+                  "lastChecked": "2026-02-03T19:12:28.449Z"
                 },
                 {
                   "type": "link",
@@ -313,7 +321,7 @@
                   "title": "Auditing | Kubernetes",
                   "order": 3,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:18.922Z"
+                  "lastChecked": "2026-02-03T19:12:29.010Z"
                 },
                 {
                   "type": "link",
@@ -322,7 +330,7 @@
                   "title": "Pod Security Policies | Kubernetes",
                   "order": 4,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:19.497Z"
+                  "lastChecked": "2026-02-03T19:12:29.568Z"
                 }
               ],
               "polls": [],
@@ -341,7 +349,7 @@
                   "title": "AWS’s Hidden Threat: AMBERSQUID Cloud-Native Cryptojacking Operation | Sysdig",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:20.124Z"
+                  "lastChecked": "2026-02-03T19:12:33.163Z"
                 },
                 {
                   "type": "link",
@@ -350,7 +358,7 @@
                   "title": "Service control policies (SCPs) - AWS Organizations",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:20.840Z"
+                  "lastChecked": "2026-02-03T19:12:33.836Z"
                 },
                 {
                   "type": "link",
@@ -359,7 +367,7 @@
                   "title": "Overview of Azure Policy - Azure Policy | Microsoft Learn",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:21.395Z"
+                  "lastChecked": "2026-02-03T19:12:34.432Z"
                 }
               ],
               "polls": [],
@@ -412,7 +420,7 @@
                   "title": "GitHub - CheckSomeBytes/aws-role-call",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:22.363Z"
+                  "lastChecked": "2026-02-03T19:12:35.502Z"
                 },
                 {
                   "type": "link",
@@ -421,7 +429,7 @@
                   "title": "GitHub - fwdcloudsec/known_aws_accounts: List of known AWS accounts",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:23.328Z"
+                  "lastChecked": "2026-02-03T19:12:36.665Z"
                 }
               ],
               "polls": [],
@@ -471,7 +479,7 @@
                       "status": "ok"
                     }
                   ],
-                  "lastChecked": "2026-02-03T07:12:26.648Z",
+                  "lastChecked": "2026-02-03T19:12:40.066Z",
                   "customTitle": "Regex Resources"
                 }
               ],
@@ -492,7 +500,7 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "AWS Inspector agentless EC2 vulnerability assessments",
-                  "lastChecked": "2026-02-03T07:12:27.375Z"
+                  "lastChecked": "2026-02-03T19:12:40.853Z"
                 }
               ],
               "polls": [],
@@ -511,7 +519,7 @@
                   "title": "Ecosystem of Insights: Building Operation Dashboards That Enable Teams - YouTube",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:28.557Z",
+                  "lastChecked": "2026-02-03T19:12:42.361Z",
                   "customTitle": "Youtube - Ecosystem of Insights"
                 },
                 {
@@ -521,7 +529,7 @@
                   "title": "Bridging the Gap: Improving Rules Effectiveness by Integrating Detection and Response - YouTube",
                   "order": 1,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:29.675Z",
+                  "lastChecked": "2026-02-03T19:12:43.671Z",
                   "customTitle": "Youtube - Bridging the Gap: Improving Rules Effectiveness"
                 }
               ],
@@ -575,7 +583,7 @@
                   "title": "Detecting suspicious email forwarding rules in Office 365 | Red Canary",
                   "order": 0,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:30.381Z"
+                  "lastChecked": "2026-02-03T19:12:44.381Z"
                 }
               ],
               "polls": [
@@ -647,7 +655,7 @@
                   "order": 0,
                   "status": "ok",
                   "customTitle": "Azure Field Inconsistencies",
-                  "lastChecked": "2026-02-03T07:12:31.021Z"
+                  "lastChecked": "2026-02-03T19:12:45.028Z"
                 },
                 {
                   "type": "link",
@@ -668,7 +676,7 @@
                       "status": "ok"
                     }
                   ],
-                  "lastChecked": "2026-02-03T07:12:32.200Z",
+                  "lastChecked": "2026-02-03T19:12:46.206Z",
                   "customTitle": "SourceIP Normalization Excercise"
                 },
                 {
@@ -678,7 +686,7 @@
                   "title": "Kinesis vs EventBridge | Svix Resources",
                   "order": 2,
                   "status": "ok",
-                  "lastChecked": "2026-02-03T07:12:32.994Z"
+                  "lastChecked": "2026-02-03T19:12:46.938Z"
                 },
                 {
                   "type": "note",
@@ -722,7 +730,7 @@
                   "order": 0,
                   "status": "broken",
                   "customTitle": "LinkedIn",
-                  "lastChecked": "2026-02-03T07:12:34.447Z"
+                  "lastChecked": "2026-02-03T19:12:48.411Z"
                 }
               ],
               "polls": [

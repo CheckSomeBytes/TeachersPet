@@ -26,6 +26,31 @@ export interface ScheduledTime {
 
 export type FontSize = 'small' | 'medium' | 'large';
 
+export interface BackupSettings {
+  enabled: boolean;
+  intervalMinutes: number;
+  maxBackups: number;
+  backupDirectory: string;
+  lastBackupTime?: string;
+  lastBackupHash?: string;
+}
+
+export interface BackupMetadata {
+  filename: string;
+  filepath: string;
+  timestamp: string;
+  size: number;
+  profileCount: number;
+  dayCount: number;
+}
+
+export interface BackupResult {
+  success: boolean;
+  error?: string;
+  filepath?: string;
+  metadata?: BackupMetadata;
+}
+
 export interface Settings {
   windowTarget: WindowTarget;
   checkLinksOnStartup: boolean;
@@ -40,6 +65,7 @@ export interface Settings {
   lastLaunchDate?: string; // ISO date string of last launch
   timerFontFamily?: string; // Font family for countdown timer (falls back to theme.fontFamily)
   labNotes?: Record<string, string>; // Lab notes keyed by lab number (e.g., "4.1")
+  backupSettings?: BackupSettings;
 }
 
 // Font size presets (in pixels) - separate presets for retro (pixel) and modern fonts
@@ -168,6 +194,15 @@ export const IPC_CHANNELS = {
   DOWNLOAD_UPDATE: 'app:download-update',
   INSTALL_UPDATE: 'app:install-update',
   GET_APP_VERSION: 'app:get-version',
+
+  // Backups
+  BACKUP_CREATE_MANUAL: 'backup:create-manual',
+  BACKUP_LIST: 'backup:list',
+  BACKUP_RESTORE: 'backup:restore',
+  BACKUP_DELETE: 'backup:delete',
+  BACKUP_SELECT_DIRECTORY: 'backup:select-directory',
+  BACKUP_GET_DEFAULT_DIRECTORY: 'backup:get-default-directory',
+  BACKUP_CREATED: 'backup:created',
 } as const;
 
 // Default theme - 8-bit style
@@ -311,6 +346,15 @@ export const PRESET_THEMES: Theme[] = [
   THEME_DARK_EMBER,
   THEME_HACKER,
 ];
+
+export const DEFAULT_BACKUP_SETTINGS: BackupSettings = {
+  enabled: true,
+  intervalMinutes: 60,
+  maxBackups: 10,
+  backupDirectory: '',
+  lastBackupTime: undefined,
+  lastBackupHash: undefined,
+};
 
 export const DEFAULT_SETTINGS: Settings = {
   windowTarget: {
