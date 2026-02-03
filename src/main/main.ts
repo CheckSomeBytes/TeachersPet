@@ -563,12 +563,13 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
     }
 
     countdownWindow = new BrowserWindow({
-      width: 300,
-      height: 180,
+      width: 640,
+      height: 360,
       alwaysOnTop: true,
       frame: false,
       resizable: true,
-      backgroundColor: theme.background,
+      transparent: true,
+      backgroundColor: '#00000000',
       title: 'Countdown Timer',
       autoHideMenuBar: true,
       roundedCorners: false,
@@ -590,6 +591,11 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      border-radius: 0;
+      overflow: hidden;
+      background: transparent;
+    }
     body {
       font-family: ${theme.fontFamily};
       background: ${theme.background};
@@ -599,10 +605,11 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
       align-items: center;
       justify-content: center;
       height: 100vh;
-      padding: 20px;
+      padding: 10px;
       text-align: center;
       position: relative;
       -webkit-app-region: drag;
+      border: 2px solid ${theme.border || theme.primary};
     }
     button, input, .message-container {
       -webkit-app-region: no-drag;
@@ -663,11 +670,11 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      margin-bottom: 20px;
+      gap: 2px;
+      margin-bottom: 8px;
       max-width: 100%;
     }
-    .message { font-size: ${theme.fontFamily.includes('Lexend') || theme.fontFamily.includes('sans-serif') || theme.fontFamily === 'sans-serif' ? '16px' : '12px'}; color: ${theme.textMuted}; word-wrap: break-word; line-height: 1.8; text-align: center; }
+    .message { font-size: ${theme.fontFamily.includes('Lexend') || theme.fontFamily.includes('sans-serif') || theme.fontFamily === 'sans-serif' ? '11px' : '8px'}; color: ${theme.textMuted}; word-wrap: break-word; line-height: 1.4; text-align: center; }
     .message-line { display: block; }
     .message-separator { color: ${theme.textMuted}; font-size: 10px; }
     .message-edit-btn {
@@ -703,7 +710,7 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
       outline: none;
     }
     .timer {
-      font-size: 72px;
+      font-size: 43px;
       font-weight: bold;
       color: ${theme.accent};
       font-family: ${theme.fontFamily};
