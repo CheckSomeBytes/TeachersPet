@@ -3,7 +3,7 @@ import { useAppStore } from '../../stores/appStore';
 import { DEFAULT_THEME, Theme, ThemeColors, PRESET_THEMES, TIMEZONES, ScheduledTime, FontSize } from '../../../shared/types';
 import './SettingsModal.css';
 
-type SettingsTab = 'profiles' | 'days' | 'window' | 'links' | 'theme' | 'schedule' | 'data' | 'updates';
+type SettingsTab = 'general' | 'profiles' | 'days' | 'theme' | 'data' | 'updates';
 
 interface WindowInfo {
   title: string;
@@ -66,6 +66,14 @@ function SettingsModal() {
   const [editingScheduleAmPm, setEditingScheduleAmPm] = useState<'AM' | 'PM'>('AM');
   const [editingScheduleDuration, setEditingScheduleDuration] = useState('15');
 
+  // Theme customization state
+  const [isCustomizing, setIsCustomizing] = useState(false);
+  const [customThemeName, setCustomThemeName] = useState('');
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const [isBreakAlertDropdownOpen, setIsBreakAlertDropdownOpen] = useState(false);
+  const [colorPickerOpen, setColorPickerOpen] = useState<{ key: keyof ThemeColors; label: string } | null>(null);
+  const [tempColorValue, setTempColorValue] = useState('');
+
   const { settings } = currentProfile;
 
   // Profile management state
@@ -114,12 +122,28 @@ function SettingsModal() {
     return `${hour}:${minute} ${amPm}`;
   };
 
-  // Load window list when window tab is active
+  // Load window list when general tab is active
   useEffect(() => {
-    if (isSettingsOpen && activeTab === 'window') {
+    if (isSettingsOpen && activeTab === 'general') {
       loadWindowList();
     }
   }, [isSettingsOpen, activeTab]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.settings-theme-dropdown')) {
+        setIsThemeDropdownOpen(false);
+        setIsBreakAlertDropdownOpen(false);
+      }
+    };
+
+    if (isThemeDropdownOpen || isBreakAlertDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isThemeDropdownOpen, isBreakAlertDropdownOpen]);
 
   // Get app version and set up update listeners
   useEffect(() => {
@@ -296,6 +320,80 @@ function SettingsModal() {
     updateSettings({ theme: DEFAULT_THEME });
   };
 
+  const saveCustomTheme = () => {
+    if (!customThemeName.trim()) {
+      addNotification('Please enter a theme name', 'error');
+      return;
+    }
+
+    const newTheme: Theme = {
+      ...settings.theme,
+      name: customThemeName.trim(),
+      isCustom: true,
+    };
+
+    const customThemes = settings.customThemes || [];
+    const existingIndex = customThemes.findIndex(t => t.name === newTheme.name);
+
+    if (existingIndex >= 0) {
+      // Update existing theme
+      customThemes[existingIndex] = newTheme;
+      updateSettings({ customThemes: [...customThemes] });
+      addNotification(`Theme "${newTheme.name}" updated!`, 'success');
+    } else {
+      // Add new theme
+      updateSettings({ customThemes: [...customThemes, newTheme] });
+      addNotification(`Theme "${newTheme.name}" saved!`, 'success');
+    }
+
+    setCustomThemeName('');
+    setIsCustomizing(false);
+  };
+
+  const deleteCustomTheme = (themeName: string) => {
+    const customThemes = settings.customThemes || [];
+    const updatedThemes = customThemes.filter(t => t.name !== themeName);
+    updateSettings({ customThemes: updatedThemes });
+
+    // If we're deleting the active theme, switch to default
+    if (settings.theme.name === themeName) {
+      updateSettings({ theme: DEFAULT_THEME });
+    }
+
+    addNotification(`Theme "${themeName}" deleted`, 'success');
+  };
+
+  const getAllThemes = (): Theme[] => {
+    return [...PRESET_THEMES, ...(settings.customThemes || [])];
+  };
+
+  // Calculate if a color is light or dark to determine text color
+  const getContrastColor = (hexColor: string): string => {
+    // Convert hex to RGB
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+
+    // Calculate relative luminance (perceived brightness)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    // Return black for light colors, white for dark colors
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+  };
+
+  const openColorPicker = (key: keyof ThemeColors, label: string) => {
+    setColorPickerOpen({ key, label });
+    setTempColorValue(settings.theme.colors[key]);
+  };
+
+  const applyColorChange = () => {
+    if (colorPickerOpen && tempColorValue) {
+      updateThemeColor(colorPickerOpen.key, tempColorValue);
+      setColorPickerOpen(null);
+    }
+  };
+
   const selectWindow = (windowTitle: string) => {
     updateSettings({
       windowTarget: {
@@ -319,6 +417,12 @@ function SettingsModal() {
 
         <div className="settings-tabs">
           <button
+            className={`settings-tab ${activeTab === 'general' ? 'settings-tab--active' : ''}`}
+            onClick={() => handleTabChange('general')}
+          >
+            GENERAL
+          </button>
+          <button
             className={`settings-tab ${activeTab === 'profiles' ? 'settings-tab--active' : ''}`}
             onClick={() => handleTabChange('profiles')}
           >
@@ -328,31 +432,13 @@ function SettingsModal() {
             className={`settings-tab ${activeTab === 'days' ? 'settings-tab--active' : ''}`}
             onClick={() => handleTabChange('days')}
           >
-            DAYS
-          </button>
-          <button
-            className={`settings-tab ${activeTab === 'window' ? 'settings-tab--active' : ''}`}
-            onClick={() => handleTabChange('window')}
-          >
-            WINDOW
-          </button>
-          <button
-            className={`settings-tab ${activeTab === 'links' ? 'settings-tab--active' : ''}`}
-            onClick={() => handleTabChange('links')}
-          >
-            LINKS
+            SCHEDULE
           </button>
           <button
             className={`settings-tab ${activeTab === 'theme' ? 'settings-tab--active' : ''}`}
             onClick={() => handleTabChange('theme')}
           >
             THEME
-          </button>
-          <button
-            className={`settings-tab ${activeTab === 'schedule' ? 'settings-tab--active' : ''}`}
-            onClick={() => handleTabChange('schedule')}
-          >
-            SCHEDULE
           </button>
           <button
             className={`settings-tab ${activeTab === 'data' ? 'settings-tab--active' : ''}`}
@@ -683,286 +769,7 @@ function SettingsModal() {
                   <p className="settings-help">No days created yet.</p>
                 )}
               </div>
-            </div>
-          )}
 
-          {activeTab === 'window' && (
-            <div className="settings-section">
-              <h3 className="settings-section-title">WINDOW TARGET</h3>
-              <p className="settings-help">
-                Select a window or type a pattern to match when pasting.
-              </p>
-
-              <div className="settings-field">
-                <label className="settings-label">CURRENT PATTERN</label>
-                <div className="settings-pattern-row">
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="e.g., Zoom Meeting, Slack, etc."
-                    value={settings.windowTarget.pattern}
-                    onChange={(e) =>
-                      updateSettings({
-                        windowTarget: {
-                          ...settings.windowTarget,
-                          pattern: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                  <select
-                    className="select settings-match-mode"
-                    value={settings.windowTarget.matchMode}
-                    onChange={(e) =>
-                      updateSettings({
-                        windowTarget: {
-                          ...settings.windowTarget,
-                          matchMode: e.target.value as 'exact' | 'contains' | 'regex',
-                        },
-                      })
-                    }
-                  >
-                    <option value="contains">Contains</option>
-                    <option value="exact">Exact</option>
-                    <option value="regex">Regex</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="settings-field">
-                <div className="settings-label-row">
-                  <label className="settings-label">SELECT FROM OPEN WINDOWS</label>
-                  <button
-                    className="btn btn--small btn--secondary"
-                    onClick={loadWindowList}
-                    disabled={isLoadingWindows}
-                  >
-                    {isLoadingWindows ? '...' : '↻'}
-                  </button>
-                </div>
-                <div className="settings-window-list">
-                  {windowList.length === 0 ? (
-                    <div className="settings-window-empty">
-                      {isLoadingWindows ? 'Loading...' : 'No windows found'}
-                    </div>
-                  ) : (
-                    windowList.map((win, index) => (
-                      <button
-                        key={index}
-                        className={`settings-window-item ${
-                          settings.windowTarget.pattern &&
-                          win.title.includes(settings.windowTarget.pattern)
-                            ? 'settings-window-item--selected'
-                            : ''
-                        }`}
-                        onClick={() => selectWindow(win.title)}
-                        title={win.title}
-                      >
-                        <span className="settings-window-process">{win.processName}</span>
-                        <span className="settings-window-title">{win.title}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="settings-field">
-                <label className="settings-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={settings.windowTarget.pressEnterAfterPaste || false}
-                    onChange={(e) =>
-                      updateSettings({
-                        windowTarget: {
-                          ...settings.windowTarget,
-                          pressEnterAfterPaste: e.target.checked,
-                        },
-                      })
-                    }
-                  />
-                  <span>Press Enter after pasting URLs and Notes</span>
-                </label>
-              </div>
-
-              <h3 className="settings-section-title">TIMEZONE</h3>
-
-              <div className="settings-field">
-                <label className="settings-label">SELECT TIMEZONE</label>
-                <select
-                  className="select"
-                  value={settings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
-                  onChange={(e) => updateSettings({ timezone: e.target.value })}
-                >
-                  {TIMEZONES.map((tz) => (
-                    <option key={tz} value={tz}>
-                      {tz.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'links' && (
-            <div className="settings-section">
-              <h3 className="settings-section-title">LINK HEALTH</h3>
-
-              <div className="settings-field">
-                <label className="settings-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={settings.checkLinksOnStartup}
-                    onChange={(e) =>
-                      updateSettings({ checkLinksOnStartup: e.target.checked })
-                    }
-                  />
-                  <span>Check all links on startup</span>
-                </label>
-              </div>
-
-              <button
-                className="btn"
-                onClick={handleCheckAllLinks}
-                disabled={isCheckingLinks}
-              >
-                {isCheckingLinks ? 'CHECKING...' : 'CHECK ALL LINKS NOW'}
-              </button>
-            </div>
-          )}
-
-          {activeTab === 'theme' && (
-            <div className="settings-section">
-              <h3 className="settings-section-title">PRESET THEMES</h3>
-
-              <div className="settings-theme-presets">
-                {PRESET_THEMES.map((preset) => (
-                  <button
-                    key={preset.name}
-                    className={`settings-theme-preset ${
-                      settings.theme.name === preset.name && !settings.theme.isCustom
-                        ? 'settings-theme-preset--active'
-                        : ''
-                    }`}
-                    onClick={() => updateSettings({ theme: { ...preset, fontFamily: settings.theme.fontFamily } })}
-                  >
-                    <div className="settings-theme-preview">
-                      <div
-                        className="settings-theme-color"
-                        style={{ backgroundColor: preset.colors.background }}
-                      />
-                      <div
-                        className="settings-theme-color"
-                        style={{ backgroundColor: preset.colors.primary }}
-                      />
-                      <div
-                        className="settings-theme-color"
-                        style={{ backgroundColor: preset.colors.secondary }}
-                      />
-                      <div
-                        className="settings-theme-color"
-                        style={{ backgroundColor: preset.colors.accent }}
-                      />
-                    </div>
-                    <span className="settings-theme-name">{preset.name}</span>
-                  </button>
-                ))}
-              </div>
-
-              <h3 className="settings-section-title">CUSTOMIZE COLORS</h3>
-
-              <div className="settings-colors">
-                {Object.entries(settings.theme.colors).map(([key, value]) => (
-                  <div key={key} className="settings-color-field">
-                    <label className="settings-label">{key.toUpperCase()}</label>
-                    <div className="settings-color-input">
-                      <input
-                        type="color"
-                        value={value}
-                        onChange={(e) =>
-                          updateThemeColor(key as keyof ThemeColors, e.target.value)
-                        }
-                      />
-                      <input
-                        type="text"
-                        className="input"
-                        value={value}
-                        onChange={(e) =>
-                          updateThemeColor(key as keyof ThemeColors, e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="settings-field">
-                <label className="settings-label">FONT FAMILY</label>
-                <select
-                  className="select"
-                  value={settings.theme.fontFamily}
-                  onChange={(e) =>
-                    updateSettings({
-                      theme: {
-                        ...settings.theme,
-                        isCustom: true,
-                        fontFamily: e.target.value,
-                      },
-                    })
-                  }
-                >
-                  <option value='"Press Start 2P", monospace'>Press Start 2P (8-bit)</option>
-                  <option value='"Lexend", sans-serif'>Lexend (Modern)</option>
-                  <option value='"Courier New", monospace'>Courier New</option>
-                  <option value='monospace'>System Monospace</option>
-                  <option value='sans-serif'>System Sans-Serif</option>
-                </select>
-              </div>
-
-              <div className="settings-field">
-                <label className="settings-label">TIMER FONT FAMILY</label>
-                <select
-                  className="select"
-                  value={settings.timerFontFamily || ''}
-                  onChange={(e) =>
-                    updateSettings({
-                      timerFontFamily: e.target.value || undefined,
-                    })
-                  }
-                >
-                  <option value="">Same as app</option>
-                  <option value='"Press Start 2P", monospace'>Press Start 2P (8-bit)</option>
-                  <option value='"Lexend", sans-serif'>Lexend (Modern)</option>
-                  <option value='"Courier New", monospace'>Courier New</option>
-                  <option value='monospace'>System Monospace</option>
-                  <option value='sans-serif'>System Sans-Serif</option>
-                </select>
-              </div>
-
-              <div className="settings-field">
-                <label className="settings-label">FONT SIZE</label>
-                <select
-                  className="select"
-                  value={settings.fontSize || 'medium'}
-                  onChange={(e) =>
-                    updateSettings({
-                      fontSize: e.target.value as FontSize,
-                    })
-                  }
-                >
-                  <option value="small">Small</option>
-                  <option value="medium">Medium</option>
-                  <option value="large">Large</option>
-                </select>
-              </div>
-
-              <button className="btn btn--secondary" onClick={resetTheme}>
-                RESET TO DEFAULT
-              </button>
-            </div>
-          )}
-
-          {activeTab === 'schedule' && (
-            <div className="settings-section">
               <h3 className="settings-section-title">SCHEDULED TIMES</h3>
               <p className="settings-help">
                 Add times to track (e.g., breaks, lunch). A countdown will show in the header.
@@ -1171,7 +978,7 @@ function SettingsModal() {
 
               <h3 className="settings-section-title">BREAK ALERT</h3>
               <p className="settings-help">
-                Change the theme when approaching a scheduled time.
+                Set when to trigger the break alert theme before scheduled break times.
               </p>
 
               <div className="settings-field">
@@ -1188,44 +995,536 @@ function SettingsModal() {
                 />
               </div>
 
+              <p className="settings-help">
+                Configure the break alert theme in the THEME tab.
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'general' && (
+            <div className="settings-section">
+              <h3 className="settings-section-title">LINK HEALTH</h3>
+
               <div className="settings-field">
-                <label className="settings-label">ALERT THEME</label>
-                <div className="settings-theme-presets settings-theme-presets--small">
-                  <button
-                    className={`settings-theme-preset ${
-                      !settings.breakAlertTheme ? 'settings-theme-preset--active' : ''
-                    }`}
-                    onClick={() => updateSettings({ breakAlertTheme: null })}
-                  >
-                    <span className="settings-theme-name">None</span>
-                  </button>
-                  {PRESET_THEMES.map((preset) => (
-                    <button
-                      key={preset.name}
-                      className={`settings-theme-preset ${
-                        settings.breakAlertTheme?.name === preset.name
-                          ? 'settings-theme-preset--active'
-                          : ''
-                      }`}
-                      onClick={() => updateSettings({ breakAlertTheme: preset })}
-                    >
-                      <div className="settings-theme-preview">
-                        <div
-                          className="settings-theme-color"
-                          style={{ backgroundColor: preset.colors.background }}
-                        />
-                        <div
-                          className="settings-theme-color"
-                          style={{ backgroundColor: preset.colors.primary }}
-                        />
-                        <div
-                          className="settings-theme-color"
-                          style={{ backgroundColor: preset.colors.accent }}
-                        />
-                      </div>
-                      <span className="settings-theme-name">{preset.name}</span>
-                    </button>
+                <label className="settings-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={settings.checkLinksOnStartup}
+                    onChange={(e) =>
+                      updateSettings({ checkLinksOnStartup: e.target.checked })
+                    }
+                  />
+                  <span>Check all links on startup</span>
+                </label>
+              </div>
+
+              <button
+                className="btn"
+                onClick={handleCheckAllLinks}
+                disabled={isCheckingLinks}
+              >
+                {isCheckingLinks ? 'CHECKING...' : 'CHECK ALL LINKS NOW'}
+              </button>
+
+              <h3 className="settings-section-title">TIMEZONE</h3>
+
+              <div className="settings-field">
+                <label className="settings-label">SELECT TIMEZONE</label>
+                <select
+                  className="select"
+                  value={settings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+                  onChange={(e) => updateSettings({ timezone: e.target.value })}
+                >
+                  {TIMEZONES.map((tz) => (
+                    <option key={tz} value={tz}>
+                      {tz.replace(/_/g, ' ')}
+                    </option>
                   ))}
+                </select>
+              </div>
+
+              <h3 className="settings-section-title">WINDOW TARGET</h3>
+              <p className="settings-help">
+                Select a window or type a pattern to match when pasting.
+              </p>
+
+              <div className="settings-field">
+                <label className="settings-label">CURRENT PATTERN</label>
+                <div className="settings-pattern-row">
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="e.g., Zoom Meeting, Slack, etc."
+                    value={settings.windowTarget.pattern}
+                    onChange={(e) =>
+                      updateSettings({
+                        windowTarget: {
+                          ...settings.windowTarget,
+                          pattern: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                  <select
+                    className="select settings-match-mode"
+                    value={settings.windowTarget.matchMode}
+                    onChange={(e) =>
+                      updateSettings({
+                        windowTarget: {
+                          ...settings.windowTarget,
+                          matchMode: e.target.value as 'exact' | 'contains' | 'regex',
+                        },
+                      })
+                    }
+                  >
+                    <option value="contains">Contains</option>
+                    <option value="exact">Exact</option>
+                    <option value="regex">Regex</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="settings-field">
+                <div className="settings-label-row">
+                  <label className="settings-label">SELECT FROM OPEN WINDOWS</label>
+                  <button
+                    className="btn btn--small btn--secondary"
+                    onClick={loadWindowList}
+                    disabled={isLoadingWindows}
+                  >
+                    {isLoadingWindows ? '...' : '↻'}
+                  </button>
+                </div>
+                <select
+                  className="select"
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      selectWindow(e.target.value);
+                    }
+                  }}
+                  disabled={isLoadingWindows || windowList.length === 0}
+                >
+                  <option value="">
+                    {isLoadingWindows ? 'Loading...' : windowList.length === 0 ? 'No windows found' : 'Choose a window...'}
+                  </option>
+                  {windowList.map((win, index) => (
+                    <option key={index} value={win.title}>
+                      {win.processName}: {win.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <h3 className="settings-section-title">PASTE OPTIONS</h3>
+
+              <div className="settings-field">
+                <label className="settings-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={settings.windowTarget.pressEnterAfterPaste || false}
+                    onChange={(e) =>
+                      updateSettings({
+                        windowTarget: {
+                          ...settings.windowTarget,
+                          pressEnterAfterPaste: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  <span>Press Enter after pasting URLs and Notes</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'theme' && (
+            <div className="settings-section">
+              <h3 className="settings-section-title">THEME SELECTION</h3>
+
+              <div className="settings-theme-row">
+                <div className="settings-field settings-theme-row-item">
+                  <label className="settings-label">FONT FAMILY</label>
+                  <select
+                    className="select"
+                    value={settings.theme.fontFamily}
+                    onChange={(e) =>
+                      updateSettings({
+                        theme: {
+                          ...settings.theme,
+                          fontFamily: e.target.value,
+                        },
+                      })
+                    }
+                  >
+                    <option value='"Press Start 2P", monospace'>Press Start 2P (8-bit)</option>
+                    <option value='"Lexend", sans-serif'>Lexend (Modern)</option>
+                    <option value='"Courier New", monospace'>Courier New</option>
+                    <option value='monospace'>System Monospace</option>
+                    <option value='sans-serif'>System Sans-Serif</option>
+                  </select>
+                </div>
+
+                <div className="settings-field settings-theme-row-item">
+                  <label className="settings-label">FONT SIZE</label>
+                  <select
+                    className="select"
+                    value={settings.fontSize || 'medium'}
+                    onChange={(e) =>
+                      updateSettings({
+                        fontSize: e.target.value as FontSize,
+                      })
+                    }
+                  >
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="settings-theme-row">
+                <div className="settings-field settings-theme-row-item">
+                  <label className="settings-label">COLOR THEME</label>
+                  <div className="settings-theme-dropdown">
+                  <button
+                    className="settings-theme-dropdown-button"
+                    onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                  >
+                    <div className="settings-theme-dropdown-preview">
+                      <div className="settings-theme-swatch" style={{ backgroundColor: settings.theme.colors.background }} />
+                      <div className="settings-theme-swatch" style={{ backgroundColor: settings.theme.colors.surface }} />
+                      <div className="settings-theme-swatch" style={{ backgroundColor: settings.theme.colors.primary }} />
+                      <div className="settings-theme-swatch" style={{ backgroundColor: settings.theme.colors.secondary }} />
+                      <div className="settings-theme-swatch" style={{ backgroundColor: settings.theme.colors.accent }} />
+                    </div>
+                    <span className="settings-theme-dropdown-name">{settings.theme.name}</span>
+                    <span className="settings-theme-dropdown-arrow">{isThemeDropdownOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {isThemeDropdownOpen && (
+                    <div className="settings-theme-dropdown-menu">
+                      <div className="settings-theme-dropdown-group">
+                        <div className="settings-theme-dropdown-group-label">PRESET THEMES</div>
+                        {PRESET_THEMES.map((theme) => (
+                          <button
+                            key={theme.name}
+                            className={`settings-theme-dropdown-option ${settings.theme.name === theme.name ? 'settings-theme-dropdown-option--active' : ''}`}
+                            onClick={() => {
+                              updateSettings({ theme: { ...theme, fontFamily: settings.theme.fontFamily } });
+                              setIsThemeDropdownOpen(false);
+                            }}
+                          >
+                            <div className="settings-theme-dropdown-preview">
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.background }} />
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.surface }} />
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.primary }} />
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.secondary }} />
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.accent }} />
+                            </div>
+                            <span className="settings-theme-dropdown-name">{theme.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {(settings.customThemes || []).length > 0 && (
+                        <div className="settings-theme-dropdown-group">
+                          <div className="settings-theme-dropdown-group-label">CUSTOM THEMES</div>
+                          {(settings.customThemes || []).map((theme) => (
+                            <button
+                              key={theme.name}
+                              className={`settings-theme-dropdown-option ${settings.theme.name === theme.name ? 'settings-theme-dropdown-option--active' : ''}`}
+                              onClick={() => {
+                                updateSettings({ theme: { ...theme, fontFamily: settings.theme.fontFamily } });
+                                setIsThemeDropdownOpen(false);
+                              }}
+                            >
+                              <div className="settings-theme-dropdown-preview">
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.background }} />
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.surface }} />
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.primary }} />
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.secondary }} />
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.accent }} />
+                              </div>
+                              <span className="settings-theme-dropdown-name">{theme.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  </div>
+                </div>
+
+                <div className="settings-field settings-theme-row-item">
+                  <label className="settings-label">&nbsp;</label>
+                  <button
+                    className="btn btn--secondary"
+                    style={{ width: '100%' }}
+                    onClick={() => setIsCustomizing(!isCustomizing)}
+                  >
+                    {isCustomizing ? '▼ HIDE' : '▶ CUSTOMIZE'}
+                  </button>
+                </div>
+              </div>
+
+              {isCustomizing && (
+                <>
+                  <h3 className="settings-section-title">CUSTOMIZE COLORS</h3>
+
+                  <div className="settings-field">
+                    <label className="settings-label">COLOR PALETTE</label>
+                    <div className="settings-theme-palette">
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.background }}
+                        onClick={() => openColorPicker('background', 'BACKGROUND')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.background) }}>BG</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.background) }}>{settings.theme.colors.background}</span>
+                      </div>
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.surface }}
+                        onClick={() => openColorPicker('surface', 'SURFACE')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.surface) }}>SURFACE</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.surface) }}>{settings.theme.colors.surface}</span>
+                      </div>
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.primary }}
+                        onClick={() => openColorPicker('primary', 'PRIMARY')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.primary) }}>PRIMARY</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.primary) }}>{settings.theme.colors.primary}</span>
+                      </div>
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.secondary }}
+                        onClick={() => openColorPicker('secondary', 'SECONDARY')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.secondary) }}>SECONDARY</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.secondary) }}>{settings.theme.colors.secondary}</span>
+                      </div>
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.accent }}
+                        onClick={() => openColorPicker('accent', 'ACCENT')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.accent) }}>ACCENT</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.accent) }}>{settings.theme.colors.accent}</span>
+                      </div>
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.text }}
+                        onClick={() => openColorPicker('text', 'TEXT')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.text) }}>TEXT</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.text) }}>{settings.theme.colors.text}</span>
+                      </div>
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.textMuted }}
+                        onClick={() => openColorPicker('textMuted', 'TEXT MUTED')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.textMuted) }}>MUTED</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.textMuted) }}>{settings.theme.colors.textMuted}</span>
+                      </div>
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.border }}
+                        onClick={() => openColorPicker('border', 'BORDER')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.border) }}>BORDER</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.border) }}>{settings.theme.colors.border}</span>
+                      </div>
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.danger }}
+                        onClick={() => openColorPicker('danger', 'DANGER')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.danger) }}>DANGER</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.danger) }}>{settings.theme.colors.danger}</span>
+                      </div>
+                      <div
+                        className="settings-theme-color-wide settings-theme-color-clickable"
+                        style={{ backgroundColor: settings.theme.colors.success }}
+                        onClick={() => openColorPicker('success', 'SUCCESS')}
+                      >
+                        <span className="settings-theme-color-label-overlay" style={{ color: getContrastColor(settings.theme.colors.success) }}>SUCCESS</span>
+                        <span className="settings-theme-color-hex-overlay" style={{ color: getContrastColor(settings.theme.colors.success) }}>{settings.theme.colors.success}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="settings-field">
+                    <label className="settings-label">SAVE CUSTOM THEME</label>
+                    <div className="settings-add-day-row">
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Theme name..."
+                        value={customThemeName}
+                        onChange={(e) => setCustomThemeName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && customThemeName.trim()) {
+                            saveCustomTheme();
+                          }
+                        }}
+                      />
+                      <button
+                        className="btn btn--small btn--success"
+                        onClick={saveCustomTheme}
+                      >
+                        💾 SAVE
+                      </button>
+                    </div>
+                  </div>
+
+                  {(settings.customThemes || []).length > 0 && (
+                    <>
+                      <h3 className="settings-section-title">CUSTOM THEMES</h3>
+                      <div className="settings-day-list">
+                        {(settings.customThemes || []).map((theme) => (
+                          <div key={theme.name} className="settings-day-item">
+                            <span className="settings-day-name">{theme.name}</span>
+                            <div className="settings-day-actions">
+                              <button
+                                className="btn btn--small btn--secondary"
+                                onClick={() => {
+                                  updateSettings({ theme: theme });
+                                  setCustomThemeName(theme.name);
+                                }}
+                              >
+                                ✎ EDIT
+                              </button>
+                              <button
+                                className="btn btn--small btn--danger"
+                                onClick={() => {
+                                  if (confirm(`Delete custom theme "${theme.name}"?`)) {
+                                    deleteCustomTheme(theme.name);
+                                  }
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              <h3 className="settings-section-title">ADDITIONAL SETTINGS</h3>
+
+              <div className="settings-field">
+                <label className="settings-label">TIMER FONT FAMILY</label>
+                <select
+                  className="select"
+                  value={settings.timerFontFamily || ''}
+                  onChange={(e) =>
+                    updateSettings({
+                      timerFontFamily: e.target.value || undefined,
+                    })
+                  }
+                >
+                  <option value="">Same as app</option>
+                  <option value='"Press Start 2P", monospace'>Press Start 2P (8-bit)</option>
+                  <option value='"Lexend", sans-serif'>Lexend (Modern)</option>
+                  <option value='"Courier New", monospace'>Courier New</option>
+                  <option value='monospace'>System Monospace</option>
+                  <option value='sans-serif'>System Sans-Serif</option>
+                </select>
+              </div>
+
+              <div className="settings-field">
+                <label className="settings-label">BREAK ALERT THEME</label>
+                <p className="settings-help" style={{ marginTop: '4px', marginBottom: '8px' }}>
+                  Change the theme when approaching a scheduled break time.
+                </p>
+                <div className="settings-theme-dropdown">
+                  <button
+                    className="settings-theme-dropdown-button"
+                    onClick={() => setIsBreakAlertDropdownOpen(!isBreakAlertDropdownOpen)}
+                  >
+                    {settings.breakAlertTheme ? (
+                      <>
+                        <div className="settings-theme-dropdown-preview">
+                          <div className="settings-theme-swatch" style={{ backgroundColor: settings.breakAlertTheme.colors.background }} />
+                          <div className="settings-theme-swatch" style={{ backgroundColor: settings.breakAlertTheme.colors.surface }} />
+                          <div className="settings-theme-swatch" style={{ backgroundColor: settings.breakAlertTheme.colors.primary }} />
+                          <div className="settings-theme-swatch" style={{ backgroundColor: settings.breakAlertTheme.colors.secondary }} />
+                          <div className="settings-theme-swatch" style={{ backgroundColor: settings.breakAlertTheme.colors.accent }} />
+                        </div>
+                        <span className="settings-theme-dropdown-name">{settings.breakAlertTheme.name}</span>
+                      </>
+                    ) : (
+                      <span className="settings-theme-dropdown-name">None</span>
+                    )}
+                    <span className="settings-theme-dropdown-arrow">{isBreakAlertDropdownOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {isBreakAlertDropdownOpen && (
+                    <div className="settings-theme-dropdown-menu">
+                      <div className="settings-theme-dropdown-group">
+                        <button
+                          className={`settings-theme-dropdown-option ${!settings.breakAlertTheme ? 'settings-theme-dropdown-option--active' : ''}`}
+                          onClick={() => {
+                            updateSettings({ breakAlertTheme: null });
+                            setIsBreakAlertDropdownOpen(false);
+                          }}
+                        >
+                          <span className="settings-theme-dropdown-name">None</span>
+                        </button>
+                      </div>
+                      <div className="settings-theme-dropdown-group">
+                        <div className="settings-theme-dropdown-group-label">PRESET THEMES</div>
+                        {PRESET_THEMES.map((theme) => (
+                          <button
+                            key={theme.name}
+                            className={`settings-theme-dropdown-option ${settings.breakAlertTheme?.name === theme.name ? 'settings-theme-dropdown-option--active' : ''}`}
+                            onClick={() => {
+                              updateSettings({ breakAlertTheme: { ...theme, fontFamily: settings.theme.fontFamily } });
+                              setIsBreakAlertDropdownOpen(false);
+                            }}
+                          >
+                            <div className="settings-theme-dropdown-preview">
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.background }} />
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.surface }} />
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.primary }} />
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.secondary }} />
+                              <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.accent }} />
+                            </div>
+                            <span className="settings-theme-dropdown-name">{theme.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {(settings.customThemes || []).length > 0 && (
+                        <div className="settings-theme-dropdown-group">
+                          <div className="settings-theme-dropdown-group-label">CUSTOM THEMES</div>
+                          {(settings.customThemes || []).map((theme) => (
+                            <button
+                              key={theme.name}
+                              className={`settings-theme-dropdown-option ${settings.breakAlertTheme?.name === theme.name ? 'settings-theme-dropdown-option--active' : ''}`}
+                              onClick={() => {
+                                updateSettings({ breakAlertTheme: { ...theme, fontFamily: settings.theme.fontFamily } });
+                                setIsBreakAlertDropdownOpen(false);
+                              }}
+                            >
+                              <div className="settings-theme-dropdown-preview">
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.background }} />
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.surface }} />
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.primary }} />
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.secondary }} />
+                                <div className="settings-theme-swatch" style={{ backgroundColor: theme.colors.accent }} />
+                              </div>
+                              <span className="settings-theme-dropdown-name">{theme.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1391,6 +1690,48 @@ function SettingsModal() {
           )}
         </div>
       </div>
+
+      {colorPickerOpen && (
+        <div className="settings-color-picker-overlay" onClick={() => setColorPickerOpen(null)}>
+          <div className="settings-color-picker-modal panel" onClick={(e) => e.stopPropagation()}>
+            <h3 className="settings-section-title">EDIT {colorPickerOpen.label}</h3>
+
+            <div className="settings-color-picker-preview" style={{ backgroundColor: tempColorValue }}>
+              <span style={{ color: getContrastColor(tempColorValue) }}>{tempColorValue}</span>
+            </div>
+
+            <div className="settings-field">
+              <label className="settings-label">COLOR PICKER</label>
+              <input
+                type="color"
+                className="settings-color-picker-input"
+                value={tempColorValue}
+                onChange={(e) => setTempColorValue(e.target.value)}
+              />
+            </div>
+
+            <div className="settings-field">
+              <label className="settings-label">HEX CODE</label>
+              <input
+                type="text"
+                className="input"
+                value={tempColorValue}
+                onChange={(e) => setTempColorValue(e.target.value)}
+                placeholder="#000000"
+              />
+            </div>
+
+            <div className="settings-actions">
+              <button className="btn btn--success" onClick={applyColorChange}>
+                APPLY
+              </button>
+              <button className="btn btn--secondary" onClick={() => setColorPickerOpen(null)}>
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

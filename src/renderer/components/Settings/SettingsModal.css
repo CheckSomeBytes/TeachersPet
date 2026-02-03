@@ -272,7 +272,7 @@ input.settings-day-lab-input.input {
 }
 
 .settings-match-mode {
-  width: 100px;
+  width: 120px;
 }
 
 .settings-label-row {
@@ -519,6 +519,161 @@ input.settings-day-lab-input.input {
   font-size: 6px;
 }
 
+/* Theme palette display */
+.settings-theme-palette {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-xs);
+}
+
+.settings-theme-color-wide {
+  height: 50px;
+  border: 2px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  gap: 2px;
+}
+
+.settings-theme-color-clickable {
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
+}
+
+.settings-theme-color-clickable:hover {
+  transform: scale(1.05);
+  border-color: var(--color-accent);
+}
+
+.settings-theme-color-label-overlay {
+  font-family: var(--font-family);
+  font-size: 9px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.settings-theme-color-hex-overlay {
+  font-family: var(--font-family);
+  font-size: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* Theme selection row */
+.settings-theme-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+}
+
+.settings-theme-row-item {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Custom theme dropdown */
+.settings-theme-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.settings-theme-dropdown-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.settings-theme-dropdown-button:hover {
+  border-color: var(--color-accent);
+}
+
+.settings-theme-dropdown-preview {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.settings-theme-swatch {
+  width: 8px;
+  height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.settings-theme-dropdown-name {
+  flex: 1;
+  text-align: left;
+}
+
+.settings-theme-dropdown-arrow {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.settings-theme-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 2px;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.settings-theme-dropdown-group {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-theme-dropdown-group:last-child {
+  border-bottom: none;
+}
+
+.settings-theme-dropdown-group-label {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-background);
+  font-family: var(--font-family);
+  font-size: 7px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.settings-theme-dropdown-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.1s;
+}
+
+.settings-theme-dropdown-option:hover {
+  background-color: var(--color-background);
+}
+
+.settings-theme-dropdown-option--active {
+  background-color: var(--color-primary);
+}
+
 /* Updates tab styles */
 .settings-update-info {
   margin-top: var(--spacing-md);
@@ -555,4 +710,44 @@ input.settings-day-lab-input.input {
   height: 100%;
   background-color: var(--color-primary);
   transition: width 0.3s ease;
+}
+
+/* Color picker modal */
+.settings-color-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.settings-color-picker-modal {
+  width: 90%;
+  max-width: 350px;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.settings-color-picker-preview {
+  width: 100%;
+  height: 80px;
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+}
+
+.settings-color-picker-input {
+  width: 100%;
+  height: 60px;
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  background: none;
 }

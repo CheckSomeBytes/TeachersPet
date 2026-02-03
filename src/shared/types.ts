@@ -30,6 +30,7 @@ export interface Settings {
   windowTarget: WindowTarget;
   checkLinksOnStartup: boolean;
   theme: Theme;
+  customThemes?: Theme[]; // User-created custom themes
   fontSize: FontSize;
   labPollTemplate: string;
   timezone: string;
@@ -173,7 +174,7 @@ export const IPC_CHANNELS = {
 export const DEFAULT_THEME: Theme = {
   name: '8-Bit Classic',
   isCustom: false,
-  fontFamily: '"Press Start 2P", monospace',
+  fontFamily: '"Lexend", sans-serif',
   colors: {
     primary: '#4a9eff',
     secondary: '#ff6b9d',
@@ -243,40 +244,60 @@ export const THEME_DARK_SUNSET: Theme = {
   },
 };
 
-export const THEME_EARTHY_GREEN: Theme = {
-  name: 'Earthy Green',
+// Cool Mist - Light and airy blue palette
+export const THEME_COOL_MIST: Theme = {
+  name: 'Cool Mist',
   isCustom: false,
   fontFamily: '"Press Start 2P", monospace',
   colors: {
-    primary: '#84A98C',
-    secondary: '#52796F',
-    background: '#2F3E46',
-    surface: '#354F52',
-    text: '#CAD2C5',
-    textMuted: '#8a9a8e',
-    accent: '#CAD2C5',
-    border: '#52796F',
-    danger: '#c45b5b',
-    success: '#84A98C',
+    primary: '#5C6B73',
+    secondary: '#9DB4C0',
+    background: '#253237',
+    surface: '#5C6B73',
+    text: '#E0FBFC',
+    textMuted: '#C2DFE3',
+    accent: '#C2DFE3',
+    border: '#9DB4C0',
+    danger: '#C44900',
+    success: '#9DB4C0',
   },
 };
 
-// Modern minimalist theme with Lexend font
-export const THEME_MODERN_MINIMAL: Theme = {
-  name: 'Modern Minimal',
+// Dark Ember - Deep warm palette with burnt orange accents
+export const THEME_DARK_EMBER: Theme = {
+  name: 'Dark Ember',
   isCustom: false,
-  fontFamily: '"Lexend", sans-serif',
+  fontFamily: '"Press Start 2P", monospace',
   colors: {
-    primary: '#3B82F6',
-    secondary: '#8B5CF6',
-    background: '#0F172A',
-    surface: '#1E293B',
-    text: '#F8FAFC',
-    textMuted: '#94A3B8',
-    accent: '#22D3EE',
-    border: '#334155',
-    danger: '#EF4444',
-    success: '#22C55E',
+    primary: '#C44900',
+    secondary: '#EFD6AC',
+    background: '#04151F',
+    surface: '#183A37',
+    text: '#EFD6AC',
+    textMuted: '#b8a87d',
+    accent: '#C44900',
+    border: '#EFD6AC',
+    danger: '#C44900',
+    success: '#183A37',
+  },
+};
+
+// Hacker - Classic black and green terminal theme
+export const THEME_HACKER: Theme = {
+  name: 'Hacker',
+  isCustom: false,
+  fontFamily: '"Press Start 2P", monospace',
+  colors: {
+    primary: '#00FF00',
+    secondary: '#33FF33',
+    background: '#000000',
+    surface: '#0a0a0a',
+    text: '#00FF00',
+    textMuted: '#00AA00',
+    accent: '#00FF00',
+    border: '#00AA00',
+    danger: '#FF0000',
+    success: '#00FF00',
   },
 };
 
@@ -286,8 +307,9 @@ export const PRESET_THEMES: Theme[] = [
   THEME_WARM_AUTUMN_GLOW,
   THEME_SUNNY_BEACH_DAY,
   THEME_DARK_SUNSET,
-  THEME_EARTHY_GREEN,
-  THEME_MODERN_MINIMAL,
+  THEME_COOL_MIST,
+  THEME_DARK_EMBER,
+  THEME_HACKER,
 ];
 
 export const DEFAULT_SETTINGS: Settings = {

@@ -125,7 +125,7 @@
 .header-mode-track {
   width: 28px;
   height: 14px;
-  background: var(--color-background);
+  background: var(--color-surface);
   border: 2px solid var(--color-border);
   position: relative;
   transition: border-color 0.15s;
@@ -134,7 +134,7 @@
 .header-mode-thumb {
   width: 10px;
   height: 10px;
-  background: var(--color-text);
+  background: var(--color-accent);
   position: absolute;
   top: 0;
   left: 0;

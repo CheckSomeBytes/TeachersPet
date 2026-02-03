@@ -563,8 +563,8 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
     }
 
     countdownWindow = new BrowserWindow({
-      width: 400,
-      height: 250,
+      width: 300,
+      height: 180,
       alwaysOnTop: true,
       frame: false,
       resizable: true,
@@ -703,7 +703,7 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
       outline: none;
     }
     .timer {
-      font-size: 144px;
+      font-size: 72px;
       font-weight: bold;
       color: ${theme.accent};
       font-family: ${theme.fontFamily};
