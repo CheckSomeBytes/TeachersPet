@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { AppConfig, IPC_CHANNELS, LinkCheckResult } from '../shared/types';
+import { AppConfig, IPC_CHANNELS, LinkCheckResult, BackupMetadata, BackupResult } from '../shared/types';
 
 // Expose protected methods to the renderer process
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -136,6 +136,37 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('update-error', handler);
     return () => ipcRenderer.removeListener('update-error', handler);
   },
+
+  // Backup operations
+  createBackup: (): Promise<BackupResult> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.BACKUP_CREATE_MANUAL);
+  },
+
+  listBackups: (): Promise<BackupMetadata[]> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.BACKUP_LIST);
+  },
+
+  restoreBackup: (filepath: string): Promise<{ success: boolean; config?: AppConfig; error?: string }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.BACKUP_RESTORE, filepath);
+  },
+
+  deleteBackup: (filepath: string): Promise<{ success: boolean; error?: string }> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.BACKUP_DELETE, filepath);
+  },
+
+  selectBackupDirectory: (): Promise<string | null> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.BACKUP_SELECT_DIRECTORY);
+  },
+
+  getDefaultBackupDirectory: (): Promise<string> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.BACKUP_GET_DEFAULT_DIRECTORY);
+  },
+
+  onBackupCreated: (callback: (metadata: BackupMetadata) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, metadata: BackupMetadata) => callback(metadata);
+    ipcRenderer.on(IPC_CHANNELS.BACKUP_CREATED, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.BACKUP_CREATED, handler);
+  },
 });
 
 // Type declaration for the renderer
@@ -188,6 +219,13 @@ declare global {
       onDownloadProgress: (callback: (progress: { percent: number; transferred: number; total: number }) => void) => () => void;
       onUpdateDownloaded: (callback: (info: { version: string }) => void) => () => void;
       onUpdateError: (callback: (error: string) => void) => () => void;
+      createBackup: () => Promise<BackupResult>;
+      listBackups: () => Promise<BackupMetadata[]>;
+      restoreBackup: (filepath: string) => Promise<{ success: boolean; config?: AppConfig; error?: string }>;
+      deleteBackup: (filepath: string) => Promise<{ success: boolean; error?: string }>;
+      selectBackupDirectory: () => Promise<string | null>;
+      getDefaultBackupDirectory: () => Promise<string>;
+      onBackupCreated: (callback: (metadata: BackupMetadata) => void) => () => void;
     };
   }
 }

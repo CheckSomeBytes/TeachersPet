@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../../stores/appStore';
-import { DEFAULT_THEME, Theme, ThemeColors, PRESET_THEMES, TIMEZONES, ScheduledTime, FontSize } from '../../../shared/types';
+import { DEFAULT_THEME, Theme, ThemeColors, PRESET_THEMES, TIMEZONES, ScheduledTime, FontSize, BackupMetadata } from '../../../shared/types';
 import './SettingsModal.css';
 
 type SettingsTab = 'general' | 'profiles' | 'days' | 'theme' | 'data' | 'updates';
@@ -96,6 +96,11 @@ function SettingsModal() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isUpdateReady, setIsUpdateReady] = useState(false);
 
+  // Backup state
+  const [backupList, setBackupList] = useState<BackupMetadata[]>([]);
+  const [isLoadingBackups, setIsLoadingBackups] = useState(false);
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false);
+
   // Convert 12-hour to 24-hour format (HH:MM)
   const to24Hour = (hour: string, minute: string, amPm: 'AM' | 'PM'): string => {
     let h = parseInt(hour);
@@ -186,6 +191,28 @@ function SettingsModal() {
       removeUpdateError();
     };
   }, [appVersion]);
+
+  // Load backups when data tab is activated
+  useEffect(() => {
+    if (isSettingsOpen && activeTab === 'data') {
+      loadBackupList();
+    }
+  }, [isSettingsOpen, activeTab]);
+
+  // Listen for auto-backup creation events
+  useEffect(() => {
+    const removeBackupCreated = window.electronAPI.onBackupCreated((metadata) => {
+      addNotification('Auto-backup created', 'success');
+      // Refresh backup list if we're on the data tab
+      if (isSettingsOpen && activeTab === 'data') {
+        loadBackupList();
+      }
+    });
+
+    return () => {
+      removeBackupCreated();
+    };
+  }, [isSettingsOpen, activeTab]);
 
   const loadWindowList = async () => {
     setIsLoadingWindows(true);
@@ -300,6 +327,113 @@ function SettingsModal() {
       // App will quit and install
     } catch (error) {
       addNotification('Failed to install update', 'error');
+    }
+  };
+
+  // Backup utility functions
+  const formatBackupDate = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Backup handlers
+  const loadBackupList = async () => {
+    setIsLoadingBackups(true);
+    try {
+      const backups = await window.electronAPI.listBackups();
+      setBackupList(backups);
+    } catch (error) {
+      addNotification('Failed to load backup list', 'error');
+    } finally {
+      setIsLoadingBackups(false);
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    setIsCreatingBackup(true);
+    try {
+      const result = await window.electronAPI.createBackup();
+      if (result.success) {
+        addNotification('Backup created successfully', 'success');
+        await loadBackupList();
+      } else {
+        addNotification(`Backup failed: ${result.error}`, 'error');
+      }
+    } catch (error) {
+      addNotification('Failed to create backup', 'error');
+    } finally {
+      setIsCreatingBackup(false);
+    }
+  };
+
+  const handleRestoreBackup = async (filepath: string, filename: string) => {
+    if (!confirm(`Restore configuration from backup "${filename}"?\n\nThis will replace your current configuration and reload the app.`)) {
+      return;
+    }
+
+    try {
+      const result = await window.electronAPI.restoreBackup(filepath);
+      if (result.success && result.config) {
+        // Save the restored config
+        await window.electronAPI.saveConfig(result.config);
+        addNotification('Backup restored successfully. Reloading...', 'success');
+        // Reload the app to apply the restored config
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        addNotification(`Restore failed: ${result.error}`, 'error');
+      }
+    } catch (error) {
+      addNotification('Failed to restore backup', 'error');
+    }
+  };
+
+  const handleDeleteBackup = async (filepath: string, filename: string) => {
+    if (!confirm(`Delete backup "${filename}"?\n\nThis action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const result = await window.electronAPI.deleteBackup(filepath);
+      if (result.success) {
+        addNotification('Backup deleted', 'success');
+        await loadBackupList();
+      } else {
+        addNotification(`Delete failed: ${result.error}`, 'error');
+      }
+    } catch (error) {
+      addNotification('Failed to delete backup', 'error');
+    }
+  };
+
+  const handleSelectBackupDirectory = async () => {
+    try {
+      const directory = await window.electronAPI.selectBackupDirectory();
+      if (directory) {
+        updateSettings({
+          backupSettings: {
+            ...settings.backupSettings!,
+            backupDirectory: directory,
+          },
+        });
+        addNotification('Backup directory updated', 'success');
+      }
+    } catch (error) {
+      addNotification('Failed to select directory', 'error');
     }
   };
 
@@ -1547,6 +1681,155 @@ function SettingsModal() {
                 Export your days, sections, links, and settings to a JSON file
                 for backup or sharing.
               </p>
+
+              <h3 className="settings-section-title">AUTO-BACKUP</h3>
+
+              <div className="settings-field">
+                <label className="settings-label">
+                  <input
+                    type="checkbox"
+                    checked={settings.backupSettings?.enabled ?? true}
+                    onChange={(e) =>
+                      updateSettings({
+                        backupSettings: {
+                          ...settings.backupSettings!,
+                          enabled: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  ENABLE AUTO-BACKUP
+                </label>
+              </div>
+
+              <div className="settings-field">
+                <label className="settings-label">BACKUP INTERVAL (MINUTES)</label>
+                <input
+                  type="number"
+                  className="input"
+                  min="5"
+                  max="1440"
+                  value={settings.backupSettings?.intervalMinutes ?? 60}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 60;
+                    updateSettings({
+                      backupSettings: {
+                        ...settings.backupSettings!,
+                        intervalMinutes: Math.max(5, Math.min(1440, val)),
+                      },
+                    });
+                  }}
+                />
+              </div>
+
+              <div className="settings-field">
+                <label className="settings-label">MAX BACKUPS TO KEEP</label>
+                <input
+                  type="number"
+                  className="input"
+                  min="1"
+                  max="100"
+                  value={settings.backupSettings?.maxBackups ?? 10}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 10;
+                    updateSettings({
+                      backupSettings: {
+                        ...settings.backupSettings!,
+                        maxBackups: Math.max(1, Math.min(100, val)),
+                      },
+                    });
+                  }}
+                />
+              </div>
+
+              <div className="settings-field">
+                <label className="settings-label">BACKUP DIRECTORY</label>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    className="input"
+                    value={settings.backupSettings?.backupDirectory || ''}
+                    readOnly
+                    style={{ flex: 1 }}
+                  />
+                  <button className="btn btn--secondary" onClick={handleSelectBackupDirectory}>
+                    BROWSE
+                  </button>
+                </div>
+              </div>
+
+              {settings.backupSettings?.lastBackupTime && (
+                <p className="settings-help">
+                  Last backup: {formatBackupDate(settings.backupSettings.lastBackupTime)}
+                </p>
+              )}
+
+              <h3 className="settings-section-title">MANUAL BACKUP</h3>
+
+              <div className="settings-actions">
+                <button
+                  className="btn"
+                  onClick={handleCreateBackup}
+                  disabled={isCreatingBackup}
+                >
+                  {isCreatingBackup ? 'CREATING BACKUP...' : 'CREATE BACKUP NOW'}
+                </button>
+              </div>
+
+              <p className="settings-help">
+                Create an immediate backup of your current configuration.
+              </p>
+
+              <h3 className="settings-section-title">BACKUP HISTORY</h3>
+
+              {isLoadingBackups ? (
+                <p className="settings-help">Loading backups...</p>
+              ) : backupList.length === 0 ? (
+                <p className="settings-help">No backups found.</p>
+              ) : (
+                <>
+                  <div style={{ marginBottom: '12px' }}>
+                    {backupList.map((backup) => (
+                      <div
+                        key={backup.filepath}
+                        style={{
+                          padding: '12px',
+                          marginBottom: '8px',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: '4px',
+                          backgroundColor: 'var(--color-surface)',
+                        }}
+                      >
+                        <div style={{ marginBottom: '8px' }}>
+                          <strong>{formatBackupDate(backup.timestamp)}</strong>
+                          <div style={{ fontSize: '0.9em', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                            {backup.profileCount} profile{backup.profileCount !== 1 ? 's' : ''} • {backup.dayCount} day{backup.dayCount !== 1 ? 's' : ''} • {formatFileSize(backup.size)}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            className="btn btn--secondary"
+                            onClick={() => handleRestoreBackup(backup.filepath, backup.filename)}
+                            style={{ fontSize: '0.9em', padding: '4px 12px' }}
+                          >
+                            RESTORE
+                          </button>
+                          <button
+                            className="btn btn--danger"
+                            onClick={() => handleDeleteBackup(backup.filepath, backup.filename)}
+                            style={{ fontSize: '0.9em', padding: '4px 12px' }}
+                          >
+                            DELETE
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="settings-help">
+                    Backup directory: {settings.backupSettings?.backupDirectory || 'Loading...'}
+                  </p>
+                </>
+              )}
 
               <h3 className="settings-section-title">POLLS</h3>
 

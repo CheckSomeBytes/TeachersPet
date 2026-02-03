@@ -1,16 +1,20 @@
 import { app, BrowserWindow, ipcMain, shell, clipboard, dialog, Menu, net } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { join } from 'path';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs';
+import { createHash } from 'crypto';
 import {
   AppConfig,
   DEFAULT_CONFIG,
   IPC_CHANNELS,
   LinkCheckResult,
+  BackupMetadata,
+  BackupResult,
 } from '../shared/types';
 
 let mainWindow: BrowserWindow | null = null;
 let countdownWindow: BrowserWindow | null = null;
+let backupTimerHandle: NodeJS.Timeout | null = null;
 
 // Get the data directory (same folder as the app)
 function getDataPath(): string {
@@ -359,6 +363,257 @@ function createWindow(): void {
   });
 }
 
+// ============================================================================
+// BACKUP FUNCTIONS
+// ============================================================================
+
+// Get the default backup directory
+function getDefaultBackupDirectory(): string {
+  return join(app.getPath('documents'), 'teachers-pet-backups');
+}
+
+// Calculate SHA256 hash of config for change detection
+function calculateConfigHash(config: AppConfig): string {
+  const configStr = JSON.stringify(config);
+  return createHash('sha256').update(configStr).digest('hex');
+}
+
+// Create a backup of the current configuration
+function createBackup(config: AppConfig, directory: string): BackupResult {
+  try {
+    // Ensure backup directory exists
+    if (!existsSync(directory)) {
+      mkdirSync(directory, { recursive: true });
+    }
+
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+    const filename = `backup-${timestamp}.json`;
+    const filepath = join(directory, filename);
+
+    // Calculate metadata
+    const totalDays = config.profiles.reduce((sum, profile) => sum + profile.days.length, 0);
+    const configStr = JSON.stringify(config, null, 2);
+    const size = Buffer.byteLength(configStr, 'utf-8');
+
+    // Write backup file
+    writeFileSync(filepath, configStr);
+
+    const metadata: BackupMetadata = {
+      filename,
+      filepath,
+      timestamp: new Date().toISOString(),
+      size,
+      profileCount: config.profiles.length,
+      dayCount: totalDays,
+    };
+
+    return {
+      success: true,
+      filepath,
+      metadata,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+// Enforce backup retention policy (keep only N most recent backups)
+function enforceBackupRetention(directory: string, maxBackups: number): void {
+  try {
+    if (!existsSync(directory)) {
+      return;
+    }
+
+    const files = readdirSync(directory)
+      .filter((f) => f.startsWith('backup-') && f.endsWith('.json'))
+      .map((f) => ({
+        name: f,
+        path: join(directory, f),
+        mtime: statSync(join(directory, f)).mtime.getTime(),
+      }))
+      .sort((a, b) => b.mtime - a.mtime); // Sort newest first
+
+    // Delete old backups
+    if (files.length > maxBackups) {
+      const toDelete = files.slice(maxBackups);
+      toDelete.forEach((file) => {
+        try {
+          unlinkSync(file.path);
+          console.log(`[Backup] Deleted old backup: ${file.name}`);
+        } catch (error) {
+          console.error(`[Backup] Error deleting ${file.name}:`, error);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('[Backup] Error enforcing retention:', error);
+  }
+}
+
+// List all available backups
+function listBackups(directory: string): BackupMetadata[] {
+  try {
+    if (!existsSync(directory)) {
+      return [];
+    }
+
+    const files = readdirSync(directory)
+      .filter((f) => f.startsWith('backup-') && f.endsWith('.json'))
+      .map((filename) => {
+        const filepath = join(directory, filename);
+        const stats = statSync(filepath);
+
+        // Read the file to get profile and day counts
+        try {
+          const content = readFileSync(filepath, 'utf-8');
+          const config = JSON.parse(content) as AppConfig;
+          const totalDays = config.profiles.reduce((sum, profile) => sum + profile.days.length, 0);
+
+          return {
+            filename,
+            filepath,
+            timestamp: stats.mtime.toISOString(),
+            size: stats.size,
+            profileCount: config.profiles.length,
+            dayCount: totalDays,
+          };
+        } catch {
+          // If we can't parse the file, return basic metadata
+          return {
+            filename,
+            filepath,
+            timestamp: stats.mtime.toISOString(),
+            size: stats.size,
+            profileCount: 0,
+            dayCount: 0,
+          };
+        }
+      })
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); // Newest first
+
+    return files;
+  } catch (error) {
+    console.error('[Backup] Error listing backups:', error);
+    return [];
+  }
+}
+
+// Restore configuration from a backup file
+function restoreBackup(filepath: string): { success: boolean; config?: AppConfig; error?: string } {
+  try {
+    if (!existsSync(filepath)) {
+      return { success: false, error: 'Backup file not found' };
+    }
+
+    const content = readFileSync(filepath, 'utf-8');
+    const config = JSON.parse(content) as AppConfig;
+
+    // Validate that it's a valid config
+    if (!config.profiles || !Array.isArray(config.profiles)) {
+      return { success: false, error: 'Invalid backup file format' };
+    }
+
+    return { success: true, config };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+// Delete a backup file
+function deleteBackup(filepath: string): { success: boolean; error?: string } {
+  try {
+    if (!existsSync(filepath)) {
+      return { success: false, error: 'Backup file not found' };
+    }
+
+    unlinkSync(filepath);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+// Start the automatic backup timer
+function startBackupTimer(config: AppConfig): void {
+  // Stop any existing timer
+  stopBackupTimer();
+
+  // Find backup settings from current profile
+  const currentProfile = config.profiles.find((p) => p.id === config.currentProfileId);
+  if (!currentProfile?.settings.backupSettings?.enabled) {
+    console.log('[Backup] Auto-backup is disabled');
+    return;
+  }
+
+  const settings = currentProfile.settings.backupSettings;
+  const intervalMs = settings.intervalMinutes * 60 * 1000;
+
+  console.log(`[Backup] Starting auto-backup timer (interval: ${settings.intervalMinutes} minutes)`);
+
+  backupTimerHandle = setInterval(() => {
+    // Reload config to get latest state
+    const latestConfig = loadConfig();
+    const latestProfile = latestConfig.profiles.find((p) => p.id === latestConfig.currentProfileId);
+
+    if (!latestProfile?.settings.backupSettings?.enabled) {
+      console.log('[Backup] Auto-backup disabled, stopping timer');
+      stopBackupTimer();
+      return;
+    }
+
+    const latestSettings = latestProfile.settings.backupSettings;
+    const currentHash = calculateConfigHash(latestConfig);
+
+    // Check if config has changed since last backup
+    if (latestSettings.lastBackupHash && currentHash === latestSettings.lastBackupHash) {
+      console.log('[Backup] No changes detected, skipping backup');
+      return;
+    }
+
+    // Create backup
+    const directory = latestSettings.backupDirectory || getDefaultBackupDirectory();
+    const result = createBackup(latestConfig, directory);
+
+    if (result.success) {
+      console.log('[Backup] Auto-backup created:', result.filepath);
+
+      // Enforce retention policy
+      enforceBackupRetention(directory, latestSettings.maxBackups);
+
+      // Update settings with last backup info
+      latestProfile.settings.backupSettings.lastBackupTime = new Date().toISOString();
+      latestProfile.settings.backupSettings.lastBackupHash = currentHash;
+      saveConfig(latestConfig);
+
+      // Notify renderer
+      if (mainWindow) {
+        mainWindow.webContents.send(IPC_CHANNELS.BACKUP_CREATED, result.metadata);
+      }
+    } else {
+      console.error('[Backup] Auto-backup failed:', result.error);
+    }
+  }, intervalMs);
+}
+
+// Stop the automatic backup timer
+function stopBackupTimer(): void {
+  if (backupTimerHandle) {
+    clearInterval(backupTimerHandle);
+    backupTimerHandle = null;
+    console.log('[Backup] Auto-backup timer stopped');
+  }
+}
+
 // Set up IPC handlers
 function setupIPC(): void {
   // Config operations
@@ -551,6 +806,68 @@ function setupIPC(): void {
 
   ipcMain.handle(IPC_CHANNELS.GET_APP_VERSION, () => {
     return app.getVersion();
+  });
+
+  // Backup operations
+  ipcMain.handle(IPC_CHANNELS.BACKUP_GET_DEFAULT_DIRECTORY, () => {
+    return getDefaultBackupDirectory();
+  });
+
+  ipcMain.handle(IPC_CHANNELS.BACKUP_CREATE_MANUAL, async (): Promise<BackupResult> => {
+    const config = loadConfig();
+    const currentProfile = config.profiles.find((p) => p.id === config.currentProfileId);
+    const directory =
+      currentProfile?.settings.backupSettings?.backupDirectory || getDefaultBackupDirectory();
+
+    const result = createBackup(config, directory);
+
+    if (result.success && currentProfile?.settings.backupSettings) {
+      // Enforce retention policy
+      enforceBackupRetention(directory, currentProfile.settings.backupSettings.maxBackups);
+
+      // Update last backup info
+      const hash = calculateConfigHash(config);
+      currentProfile.settings.backupSettings.lastBackupTime = new Date().toISOString();
+      currentProfile.settings.backupSettings.lastBackupHash = hash;
+      saveConfig(config);
+    }
+
+    return result;
+  });
+
+  ipcMain.handle(IPC_CHANNELS.BACKUP_LIST, async (): Promise<BackupMetadata[]> => {
+    const config = loadConfig();
+    const currentProfile = config.profiles.find((p) => p.id === config.currentProfileId);
+    const directory =
+      currentProfile?.settings.backupSettings?.backupDirectory || getDefaultBackupDirectory();
+
+    return listBackups(directory);
+  });
+
+  ipcMain.handle(
+    IPC_CHANNELS.BACKUP_RESTORE,
+    async (_, filepath: string): Promise<{ success: boolean; config?: AppConfig; error?: string }> => {
+      return restoreBackup(filepath);
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.BACKUP_DELETE,
+    async (_, filepath: string): Promise<{ success: boolean; error?: string }> => {
+      return deleteBackup(filepath);
+    }
+  );
+
+  ipcMain.handle(IPC_CHANNELS.BACKUP_SELECT_DIRECTORY, async (): Promise<string | null> => {
+    const result = await dialog.showOpenDialog({
+      title: 'Select Backup Directory',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+
+    if (!result.canceled && result.filePaths[0]) {
+      return result.filePaths[0];
+    }
+    return null;
   });
 }
 
@@ -891,6 +1208,32 @@ app.whenReady().then(() => {
   setupIPC();
   createWindow();
 
+  // Initialize backup system
+  const config = loadConfig();
+  const currentProfile = config.profiles.find((p) => p.id === config.currentProfileId);
+  const backupDir = currentProfile?.settings.backupSettings?.backupDirectory || getDefaultBackupDirectory();
+
+  // Ensure backup directory exists
+  if (!existsSync(backupDir)) {
+    mkdirSync(backupDir, { recursive: true });
+  }
+
+  // Create initial backup if none exist
+  const existingBackups = listBackups(backupDir);
+  if (existingBackups.length === 0) {
+    console.log('[Backup] No existing backups found, creating initial backup');
+    const result = createBackup(config, backupDir);
+    if (result.success && currentProfile?.settings.backupSettings) {
+      const hash = calculateConfigHash(config);
+      currentProfile.settings.backupSettings.lastBackupTime = new Date().toISOString();
+      currentProfile.settings.backupSettings.lastBackupHash = hash;
+      saveConfig(config);
+    }
+  }
+
+  // Start auto-backup timer
+  startBackupTimer(config);
+
   // Check for updates on startup (only in production)
   if (app.isPackaged) {
     setTimeout(() => {
@@ -911,4 +1254,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  stopBackupTimer();
 });
