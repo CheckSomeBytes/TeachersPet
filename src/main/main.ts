@@ -787,7 +787,12 @@ function setupIPC(): void {
   ipcMain.handle(IPC_CHANNELS.DOWNLOAD_UPDATE, async () => {
     try {
       if (app.isPackaged) {
-        console.log('[Update] Starting download...');
+        // Ensure allowPrerelease matches user setting before download
+        const config = loadConfig();
+        const currentProfile = config.profiles.find((p) => p.id === config.currentProfileId);
+        const includeBeta = currentProfile?.settings.includeBetaUpdates ?? false;
+        autoUpdater.allowPrerelease = includeBeta;
+        console.log(`[Update] Starting download (includeBeta: ${includeBeta})...`);
         const result = await autoUpdater.downloadUpdate();
         console.log('[Update] Download initiated:', result);
         return { success: true };
