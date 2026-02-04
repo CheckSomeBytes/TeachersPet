@@ -1,6 +1,6 @@
 {
   "name": "teacherspet",
-  "version": "1.2.0-beta.3",
+  "version": "1.2.0",
   "description": "A link and notes manager for instructors",
   "author": "CheckSomeBytes",
   "main": "out/main/main.js",
