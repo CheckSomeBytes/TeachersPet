@@ -100,6 +100,7 @@ function SettingsModal() {
   const [backupList, setBackupList] = useState<BackupMetadata[]>([]);
   const [isLoadingBackups, setIsLoadingBackups] = useState(false);
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
+  const [isBackupHistoryCollapsed, setIsBackupHistoryCollapsed] = useState(true);
 
   // Convert 12-hour to 24-hour format (HH:MM)
   const to24Hour = (hour: string, minute: string, amPm: 'AM' | 'PM'): string => {
@@ -1901,54 +1902,69 @@ function SettingsModal() {
                 Create an immediate backup of your current configuration.
               </p>
 
-              <h3 className="settings-section-title">BACKUP HISTORY</h3>
+              <h3
+                className="settings-section-title"
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                onClick={() => setIsBackupHistoryCollapsed(!isBackupHistoryCollapsed)}
+              >
+                <span style={{ fontSize: '0.8em' }}>{isBackupHistoryCollapsed ? '▶' : '▼'}</span>
+                BACKUP HISTORY ({backupList.length})
+              </h3>
 
-              {isLoadingBackups ? (
-                <p className="settings-help">Loading backups...</p>
-              ) : backupList.length === 0 ? (
-                <p className="settings-help">No backups found.</p>
-              ) : (
+              {!isBackupHistoryCollapsed && (
                 <>
-                  <div style={{ marginBottom: '12px' }}>
-                    {backupList.map((backup) => (
-                      <div
-                        key={backup.filepath}
-                        style={{
-                          padding: '12px',
-                          marginBottom: '8px',
-                          border: '1px solid var(--color-border)',
-                          borderRadius: '4px',
-                          backgroundColor: 'var(--color-surface)',
-                        }}
-                      >
-                        <div style={{ marginBottom: '8px' }}>
-                          <strong>{formatBackupDate(backup.timestamp)}</strong>
-                          <div style={{ fontSize: '0.9em', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-                            {backup.profileCount} profile{backup.profileCount !== 1 ? 's' : ''} • {backup.dayCount} day{backup.dayCount !== 1 ? 's' : ''} • {formatFileSize(backup.size)}
+                  {isLoadingBackups ? (
+                    <p className="settings-help">Loading backups...</p>
+                  ) : backupList.length === 0 ? (
+                    <p className="settings-help">No backups found.</p>
+                  ) : (
+                    <>
+                      <div style={{ marginBottom: '12px' }}>
+                        {backupList.map((backup) => (
+                          <div
+                            key={backup.filepath}
+                            style={{
+                              padding: '8px 12px',
+                              marginBottom: '6px',
+                              border: '1px solid var(--color-border)',
+                              borderRadius: '4px',
+                              backgroundColor: 'var(--color-surface)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '12px',
+                            }}
+                          >
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <strong style={{ fontSize: '0.95em' }}>{formatBackupDate(backup.timestamp)}</strong>
+                              <div style={{ fontSize: '0.85em', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                                {backup.profileCount} profile{backup.profileCount !== 1 ? 's' : ''} • {backup.dayCount} day{backup.dayCount !== 1 ? 's' : ''} • {formatFileSize(backup.size)}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                              <button
+                                className="btn btn--secondary"
+                                onClick={() => handleRestoreBackup(backup.filepath, backup.filename)}
+                                style={{ fontSize: '0.85em', padding: '4px 10px' }}
+                              >
+                                RESTORE
+                              </button>
+                              <button
+                                className="btn btn--danger"
+                                onClick={() => handleDeleteBackup(backup.filepath, backup.filename)}
+                                style={{ fontSize: '0.85em', padding: '4px 10px' }}
+                              >
+                                DELETE
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button
-                            className="btn btn--secondary"
-                            onClick={() => handleRestoreBackup(backup.filepath, backup.filename)}
-                            style={{ fontSize: '0.9em', padding: '4px 12px' }}
-                          >
-                            RESTORE
-                          </button>
-                          <button
-                            className="btn btn--danger"
-                            onClick={() => handleDeleteBackup(backup.filepath, backup.filename)}
-                            style={{ fontSize: '0.9em', padding: '4px 12px' }}
-                          >
-                            DELETE
-                          </button>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <p className="settings-help">
-                    Backup directory: {settings.backupSettings?.backupDirectory || 'Loading...'}
-                  </p>
+                      <p className="settings-help">
+                        Backup directory: {settings.backupSettings?.backupDirectory || 'Loading...'}
+                      </p>
+                    </>
+                  )}
                 </>
               )}
 
