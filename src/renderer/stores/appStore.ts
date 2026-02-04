@@ -13,6 +13,7 @@ import {
   DEFAULT_CONFIG,
   DEFAULT_SETTINGS,
   DEFAULT_PROFILE,
+  DEFAULT_BACKUP_SETTINGS,
   SectionItem,
   LinkStatus,
   AdditionalUrl,
@@ -149,12 +150,17 @@ export const useAppStore = create<AppState>((set, get) => ({
       let config: AppConfig;
       if (!loadedConfig.profiles) {
         // Old format - migrate to profile format
+        const defaultBackupDir = await window.electronAPI.getDefaultBackupDirectory();
         const migratedProfile: Profile = {
           id: 'default',
           name: 'Default Profile',
           settings: {
             ...DEFAULT_SETTINGS,
             ...(loadedConfig.settings || {}),
+            backupSettings: {
+              ...DEFAULT_BACKUP_SETTINGS,
+              backupDirectory: defaultBackupDir,
+            },
           },
           days: loadedConfig.days || [],
         };
@@ -166,13 +172,22 @@ export const useAppStore = create<AppState>((set, get) => ({
         // New format - ensure defaults are merged into each profile's settings
         config = {
           ...loadedConfig,
-          profiles: loadedConfig.profiles.map((profile: Profile) => ({
-            ...profile,
-            settings: {
-              ...DEFAULT_SETTINGS,
-              ...profile.settings,
-            },
-          })),
+          profiles: await Promise.all(
+            loadedConfig.profiles.map(async (profile: Profile) => ({
+              ...profile,
+              settings: {
+                ...DEFAULT_SETTINGS,
+                ...profile.settings,
+                backupSettings: {
+                  ...DEFAULT_BACKUP_SETTINGS,
+                  ...(profile.settings.backupSettings || {}),
+                  backupDirectory:
+                    profile.settings.backupSettings?.backupDirectory ||
+                    (await window.electronAPI.getDefaultBackupDirectory()),
+                },
+              },
+            }))
+          ),
         };
       }
 
