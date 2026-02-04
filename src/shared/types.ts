@@ -66,6 +66,7 @@ export interface Settings {
   timerFontFamily?: string; // Font family for countdown timer (falls back to theme.fontFamily)
   labNotes?: Record<string, string>; // Lab notes keyed by lab number (e.g., "4.1")
   backupSettings?: BackupSettings;
+  includeBetaUpdates?: boolean; // Whether to include beta releases in update checks (default false)
 }
 
 // Font size presets (in pixels) - separate presets for retro (pixel) and modern fonts
@@ -370,6 +371,7 @@ export const DEFAULT_SETTINGS: Settings = {
   scheduledTimes: [],
   breakAlertTheme: null,
   breakAlertMinutes: 5,
+  includeBetaUpdates: false,
 };
 
 // Common timezones for the dropdown

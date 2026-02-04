@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import './Notifications.css';
 
 function Notifications() {
   const { notifications, removeNotification } = useAppStore();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyError = async (e: React.MouseEvent, id: string, message: string) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(message);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1500);
+    } catch {
+      // Silently fail if clipboard access is denied
+    }
+  };
 
   return (
     <div className="notifications">
@@ -19,6 +31,15 @@ function Notifications() {
             {notification.type === 'info' && 'ℹ'}
           </span>
           <span className="notification-message">{notification.message}</span>
+          {notification.type === 'error' && (
+            <button
+              className="notification-copy-btn"
+              onClick={(e) => handleCopyError(e, notification.id, notification.message)}
+              title="Copy error message"
+            >
+              {copiedId === notification.id ? '✓' : '⧉'}
+            </button>
+          )}
         </div>
       ))}
     </div>

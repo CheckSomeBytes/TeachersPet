@@ -1710,6 +1710,19 @@ function SettingsModal() {
 
               <h3 className="settings-section-title">CHECK FOR UPDATES</h3>
 
+              <div className="settings-field">
+                <label className="settings-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={settings.includeBetaUpdates ?? false}
+                    onChange={(e) =>
+                      updateSettings({ includeBetaUpdates: e.target.checked })
+                    }
+                  />
+                  <span>Include beta releases in update checks</span>
+                </label>
+              </div>
+
               <div className="settings-actions">
                 <button
                   className="btn"

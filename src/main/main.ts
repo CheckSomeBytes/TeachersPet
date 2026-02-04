@@ -752,7 +752,12 @@ function setupIPC(): void {
   ipcMain.handle(IPC_CHANNELS.CHECK_FOR_UPDATES, async () => {
     try {
       if (app.isPackaged) {
-        console.log('[Update] Checking for updates...');
+        // Read setting for beta updates
+        const config = loadConfig();
+        const currentProfile = config.profiles.find((p) => p.id === config.currentProfileId);
+        const includeBeta = currentProfile?.settings.includeBetaUpdates ?? false;
+        autoUpdater.allowPrerelease = includeBeta;
+        console.log(`[Update] Checking for updates (includeBeta: ${includeBeta})...`);
         const result = await autoUpdater.checkForUpdates();
         console.log('[Update] Check result:', {
           current: app.getVersion(),
@@ -1159,6 +1164,7 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
 // Configure auto-updater
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
+autoUpdater.allowPrerelease = false; // Default to stable releases only
 
 // Explicitly set the feed URL for GitHub releases
 if (app.isPackaged) {
@@ -1237,6 +1243,10 @@ app.whenReady().then(() => {
   // Check for updates on startup (only in production)
   if (app.isPackaged) {
     setTimeout(() => {
+      // Set allowPrerelease based on user setting
+      const includeBeta = currentProfile?.settings.includeBetaUpdates ?? false;
+      autoUpdater.allowPrerelease = includeBeta;
+      console.log(`[Update] Startup check (includeBeta: ${includeBeta})`);
       autoUpdater.checkForUpdates().catch((err) => {
         console.error('Error checking for updates on startup:', err);
       });

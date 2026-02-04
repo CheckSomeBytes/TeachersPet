@@ -54,6 +54,26 @@
   flex: 1;
 }
 
+.notification-copy-btn {
+  background: transparent;
+  border: var(--border-width) solid var(--color-border);
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 10px;
+  line-height: 1;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.notification-copy-btn:hover {
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-danger);
+}
+
+.notification-copy-btn:active {
+  background-color: var(--color-surface-active);
+}
+
 @keyframes slideIn {
   from {
     transform: translateX(100%);
