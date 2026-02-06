@@ -46,6 +46,7 @@ function Header() {
     openLabNotesLabNumber,
     setOpenLabNotesLabNumber,
     updateLabNotes,
+    addPoll,
   } = useAppStore();
 
   const currentProfile = getCurrentProfile();
@@ -74,6 +75,16 @@ function Header() {
   const [showSearchPopup, setShowSearchPopup] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+
+  // Quick Poll popup state
+  const [showQuickPollPopup, setShowQuickPollPopup] = useState(false);
+  const [quickPollQuestion, setQuickPollQuestion] = useState('');
+  const [quickPollOptions, setQuickPollOptions] = useState<{ emoji: string; text: string }[]>([
+    { emoji: ':white_check_mark:', text: '' },
+    { emoji: ':x:', text: '' },
+  ]);
+  const [quickPollAnonymous, setQuickPollAnonymous] = useState(true);
+  const [quickPollSaveSectionId, setQuickPollSaveSectionId] = useState('');
 
   const timezone = currentProfile.settings.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   const scheduledTimes = currentProfile.settings.scheduledTimes || [];
@@ -572,6 +583,95 @@ function Header() {
     }
   };
 
+  // Quick Poll helpers
+  const generateQuickPollText = () => {
+    const question = quickPollQuestion.trim() || 'Your question here';
+    const validOptions = quickPollOptions.filter((o) => o.text.trim());
+    const optionStrings = validOptions.map((o) => {
+      const emoji = o.emoji.trim();
+      return emoji ? `"${emoji} ${o.text.trim()}"` : `"${o.text.trim()}"`;
+    });
+    const anonFlag = quickPollAnonymous ? ' anonymous' : '';
+    return `/poll "${question}" ${optionStrings.join(' ')}${anonFlag}`;
+  };
+
+  const handleAddPollOption = () => {
+    if (quickPollOptions.length >= 10) {
+      addNotification('Maximum 10 options allowed', 'error');
+      return;
+    }
+    setQuickPollOptions([...quickPollOptions, { emoji: '', text: '' }]);
+  };
+
+  const handleRemovePollOption = (index: number) => {
+    setQuickPollOptions(quickPollOptions.filter((_, i) => i !== index));
+  };
+
+  const handleSendQuickPoll = async () => {
+    if (!quickPollQuestion.trim()) {
+      addNotification('Please enter a question', 'error');
+      return;
+    }
+    const validOptions = quickPollOptions.filter((o) => o.text.trim());
+    if (validOptions.length < 2) {
+      addNotification('Please fill in at least 2 options', 'error');
+      return;
+    }
+    const { windowTarget } = currentProfile.settings;
+    if (!windowTarget.pattern) {
+      addNotification('No window pattern configured. Go to Settings.', 'error');
+      return;
+    }
+    const pollText = generateQuickPollText();
+    const result = await window.electronAPI.focusAndPaste(
+      windowTarget.pattern,
+      windowTarget.matchMode,
+      pollText
+    );
+    if (result.success) {
+      addNotification('Quick poll sent!', 'success');
+      setShowQuickPollPopup(false);
+    } else {
+      addNotification(result.error || 'Failed to send quick poll', 'error');
+    }
+  };
+
+  const handleCopyQuickPoll = async () => {
+    if (!quickPollQuestion.trim()) {
+      addNotification('Please enter a question', 'error');
+      return;
+    }
+    const validOptions = quickPollOptions.filter((o) => o.text.trim());
+    if (validOptions.length < 2) {
+      addNotification('Please fill in at least 2 options', 'error');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(generateQuickPollText());
+      addNotification('Poll copied to clipboard!', 'success');
+    } catch {
+      addNotification('Failed to copy to clipboard', 'error');
+    }
+  };
+
+  const handleSaveQuickPoll = () => {
+    if (!quickPollQuestion.trim()) {
+      addNotification('Please enter a question', 'error');
+      return;
+    }
+    const validOptions = quickPollOptions.filter((o) => o.text.trim());
+    if (validOptions.length < 2) {
+      addNotification('Please fill in at least 2 options', 'error');
+      return;
+    }
+    if (!quickPollSaveSectionId || !selectedDayId) {
+      addNotification('Please select a section to save to', 'error');
+      return;
+    }
+    addPoll(selectedDayId, quickPollSaveSectionId, quickPollQuestion.trim(), generateQuickPollText());
+    addNotification('Poll saved to section!', 'success');
+  };
+
   return (
     <>
     <header className="header">
@@ -746,6 +846,22 @@ function Header() {
           </div>
         )}
 
+        <button
+          className="header-poll-btn btn btn--small"
+          onClick={() => {
+            setQuickPollQuestion('');
+            setQuickPollOptions([
+              { emoji: ':white_check_mark:', text: '' },
+              { emoji: ':x:', text: '' },
+            ]);
+            setQuickPollAnonymous(true);
+            setQuickPollSaveSectionId('');
+            setShowQuickPollPopup(true);
+          }}
+          title="Quick Poll"
+        >
+          📊
+        </button>
         <button
           className="header-search-btn btn btn--small"
           onClick={() => {
@@ -1012,6 +1128,139 @@ function Header() {
                   </button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Poll Popup */}
+      {showQuickPollPopup && (
+        <div className="lab-popup-overlay" onClick={() => setShowQuickPollPopup(false)}>
+          <div className="lab-popup quick-poll-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="lab-popup-header">
+              <span className="lab-popup-title">QUICK POLL</span>
+              <button
+                className="btn btn--small btn--danger"
+                onClick={() => setShowQuickPollPopup(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="lab-popup-content">
+              <div className="quick-poll-field">
+                <label className="lab-popup-label">QUESTION</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Enter your poll question..."
+                  value={quickPollQuestion}
+                  onChange={(e) => setQuickPollQuestion(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="quick-poll-field">
+                <label className="lab-popup-label">ANSWERS</label>
+                {quickPollOptions.map((option, index) => (
+                  <div key={index} className="quick-poll-option-row">
+                    <input
+                      type="text"
+                      className="input quick-poll-emoji-input"
+                      placeholder=":emoji:"
+                      value={option.emoji}
+                      onChange={(e) => {
+                        const updated = [...quickPollOptions];
+                        updated[index] = { ...updated[index], emoji: e.target.value };
+                        setQuickPollOptions(updated);
+                      }}
+                    />
+                    <input
+                      type="text"
+                      className="input quick-poll-text-input"
+                      placeholder={`Option ${index + 1}`}
+                      value={option.text}
+                      onChange={(e) => {
+                        const updated = [...quickPollOptions];
+                        updated[index] = { ...updated[index], text: e.target.value };
+                        setQuickPollOptions(updated);
+                      }}
+                    />
+                    {quickPollOptions.length > 2 && (
+                      <button
+                        className="btn btn--small btn--danger quick-poll-remove-btn"
+                        onClick={() => handleRemovePollOption(index)}
+                        title="Remove option"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  className="btn btn--small quick-poll-add-btn"
+                  onClick={handleAddPollOption}
+                >
+                  + ADD OPTION
+                </button>
+              </div>
+              <div className="quick-poll-toggle">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={quickPollAnonymous}
+                    onChange={(e) => setQuickPollAnonymous(e.target.checked)}
+                  />
+                  <span className="quick-poll-toggle-label">ANONYMOUS</span>
+                </label>
+              </div>
+              <div className="quick-poll-field">
+                <label className="lab-popup-label">SAVE TO SECTION</label>
+                <select
+                  className="input quick-poll-section-select"
+                  value={quickPollSaveSectionId}
+                  onChange={(e) => setQuickPollSaveSectionId(e.target.value)}
+                >
+                  <option value="">Don't save</option>
+                  {currentDay?.sections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="lab-popup-preview">
+                <label className="lab-popup-label">PREVIEW</label>
+                <div className="lab-popup-preview-text">
+                  {generateQuickPollText()}
+                </div>
+              </div>
+            </div>
+            <div className="lab-popup-actions">
+              <button
+                className="btn btn--success"
+                onClick={handleSendQuickPoll}
+              >
+                SEND TO SLACK
+              </button>
+              <button
+                className="btn btn--accent"
+                onClick={handleSaveQuickPoll}
+                disabled={!quickPollSaveSectionId}
+                title={!quickPollSaveSectionId ? 'Select a section to save to' : 'Save poll to section'}
+              >
+                SAVE
+              </button>
+              <button
+                className="btn btn--secondary"
+                onClick={handleCopyQuickPoll}
+              >
+                COPY
+              </button>
+              <button
+                className="btn btn--secondary"
+                onClick={() => setShowQuickPollPopup(false)}
+              >
+                CANCEL
+              </button>
             </div>
           </div>
         </div>
