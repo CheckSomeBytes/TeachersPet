@@ -757,7 +757,8 @@ function setupIPC(): void {
         const currentProfile = config.profiles.find((p) => p.id === config.currentProfileId);
         const includeBeta = currentProfile?.settings.includeBetaUpdates ?? false;
         autoUpdater.allowPrerelease = includeBeta;
-        console.log(`[Update] Checking for updates (includeBeta: ${includeBeta})...`);
+        autoUpdater.channel = includeBeta ? 'beta' : 'latest';
+        console.log(`[Update] Checking for updates (includeBeta: ${includeBeta}, channel: ${autoUpdater.channel})...`);
         const result = await autoUpdater.checkForUpdates();
         console.log('[Update] Check result:', {
           current: app.getVersion(),
@@ -787,12 +788,13 @@ function setupIPC(): void {
   ipcMain.handle(IPC_CHANNELS.DOWNLOAD_UPDATE, async () => {
     try {
       if (app.isPackaged) {
-        // Ensure allowPrerelease matches user setting before download
+        // Ensure allowPrerelease and channel match user setting before download
         const config = loadConfig();
         const currentProfile = config.profiles.find((p) => p.id === config.currentProfileId);
         const includeBeta = currentProfile?.settings.includeBetaUpdates ?? false;
         autoUpdater.allowPrerelease = includeBeta;
-        console.log(`[Update] Starting download (includeBeta: ${includeBeta})...`);
+        autoUpdater.channel = includeBeta ? 'beta' : 'latest';
+        console.log(`[Update] Starting download (includeBeta: ${includeBeta}, channel: ${autoUpdater.channel})...`);
         const result = await autoUpdater.downloadUpdate();
         console.log('[Update] Download initiated:', result);
         return { success: true };
@@ -1248,10 +1250,11 @@ app.whenReady().then(() => {
   // Check for updates on startup (only in production)
   if (app.isPackaged) {
     setTimeout(() => {
-      // Set allowPrerelease based on user setting
+      // Set allowPrerelease and channel based on user setting
       const includeBeta = currentProfile?.settings.includeBetaUpdates ?? false;
       autoUpdater.allowPrerelease = includeBeta;
-      console.log(`[Update] Startup check (includeBeta: ${includeBeta})`);
+      autoUpdater.channel = includeBeta ? 'beta' : 'latest';
+      console.log(`[Update] Startup check (includeBeta: ${includeBeta}, channel: ${autoUpdater.channel})`);
       autoUpdater.checkForUpdates().catch((err) => {
         console.error('Error checking for updates on startup:', err);
       });

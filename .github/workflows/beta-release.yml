@@ -27,6 +27,18 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Configure beta channel
+        shell: pwsh
+        run: |
+          $pkg = Get-Content package.json | ConvertFrom-Json
+          $pkg.build.publish = @{
+            provider = "github"
+            owner = "CheckSomeBytes"
+            repo = "TeachersPet"
+            channel = "beta"
+          }
+          $pkg | ConvertTo-Json -Depth 10 | Set-Content package.json
+
       - name: Package application
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
