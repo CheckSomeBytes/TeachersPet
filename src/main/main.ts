@@ -1172,6 +1172,8 @@ function openCountdownTimer(totalMinutes: number, message: string, theme: TimerT
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
 autoUpdater.allowPrerelease = false; // Default to stable releases only
+// Skip code signature verification for unsigned builds
+(autoUpdater as any).verifyUpdateCodeSignature = () => Promise.resolve(null);
 
 // Explicitly set the feed URL for GitHub releases
 if (app.isPackaged) {
