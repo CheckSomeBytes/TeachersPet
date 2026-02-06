@@ -45,12 +45,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run package
 
+      - name: Remove latest.yml to prevent stable channel pollution
+        shell: pwsh
+        run: |
+          if (Test-Path dist/latest.yml) { Remove-Item dist/latest.yml }
+
       - name: Upload Beta Release Assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
             dist/*.exe
-            dist/*.yml
+            dist/beta.yml
+            dist/builder-debug.yml
           prerelease: true
           name: Beta ${{ github.ref_name }}
         env:
